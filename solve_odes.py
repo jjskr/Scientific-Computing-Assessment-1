@@ -29,13 +29,18 @@ def euler_step(f, x, t, delta_t):
 
 def runge_kutta(f, x, t, delta_t):
 
-    k1 = f(x, t)
-    k2 = f((x + delta_t * k1/2), (t + delta_t/2))
-    k3 = f((x + delta_t * k2/2), (t + delta_t/2))
-    k4 = f((x + delta_t * k3), (t + delta_t))
+    k1 = np.array(f(x, t))
+    print(k1)
+    k2 = np.array(f((x + delta_t * k1/2), (t + delta_t/2)))
+    print(k2)
+    k3 = np.array(f((x + delta_t * k2/2), (t + delta_t/2)))
+    print(k3)
+    k4 = np.array(f((x + delta_t * k3), (t + delta_t)))
+    print(k4)
     k = (k1+2*k2+2*k3+k4)/6
     t = t + delta_t
     x = x + delta_t * k
+
     return x, t
 
 

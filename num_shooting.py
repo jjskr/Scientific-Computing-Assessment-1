@@ -20,8 +20,9 @@ def pp_eqs(X, t):
 
 t = np.linspace(0, 100, 1000)
 x0 = 0.1, 0.2
+delta_t = 0.1
 
-sols = solve_ode(x0, t[0], t[len(t)-1], 'euler', 0.1, pp_eqs)
+sols = solve_ode(x0, t[0], t[len(t)-1], 'euler', delta_t, pp_eqs)
 
 print(sols)
 
@@ -36,8 +37,6 @@ l2 = l2[:-1]
 
 print(l2)
 print(t)
-plt.plot(l1, t)
-plt.plot(l2, t)
+plt.plot(t, l1)
+plt.plot(t, l2)
 plt.show()
-
-
