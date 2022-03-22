@@ -19,15 +19,15 @@ def f_true(x, t):
     return x
 
 
-def euler_step(x, t, delta_t):
+def euler_step(f, x, t, delta_t):
 
-    x = x + delta_t * np.array(f2(x, t))
+    x = x + delta_t * np.array(f(x, t))
     t = t + delta_t
 
     return x, t
 
 
-def runge_kutta(x, t, delta_t):
+def runge_kutta(f, x, t, delta_t):
 
     k1 = f(x, t)
     k2 = f((x + delta_t * k1/2), (t + delta_t/2))
@@ -39,7 +39,7 @@ def runge_kutta(x, t, delta_t):
     return x, t
 
 
-def solve_to(x0, t0, t1, h, step, intervals):
+def solve_to(x0, t0, t1, h, step, intervals, fun):
     #
     # intervals = (t2-t)/h
     #
@@ -63,16 +63,17 @@ def solve_to(x0, t0, t1, h, step, intervals):
 
     if step == 'euler':
         for num in range(intervals):
-            xn, tn = euler_step(xn, tn, delta_t)
+            xn, tn = euler_step(fun, xn, tn, delta_t)
             # print(tn)
     elif step == 'runge':
         for num in range(intervals):
-            xn, tn = runge_kutta(xn, tn, delta_t)
+            xn, tn = runge_kutta(fun, xn, tn, delta_t)
             # print(xn)
             # print(xn)
     return xn
 
-def solve_ode(x0, t0, t1, step, deltat_max):
+
+def solve_ode(x0, t0, t1, step, deltat_max, eqs):
 
     x = [np.array(x0)]
     t_array = []
@@ -90,14 +91,16 @@ def solve_ode(x0, t0, t1, step, deltat_max):
         t0 += delta_t
     t_array = t_array + [t1]
 
+    fun = eqs
+
     for no in range(1, len(t_array)):
         # print(no)
         # print(t_array[no])
         if isinstance(x[no-1], list):
-            xx = solve_to(x[no-1][:], t_array[no-1], t_array[no], delta_t, step, intervals)
+            xx = solve_to(x[no-1][:], t_array[no-1], t_array[no], delta_t, step, intervals, fun)
             x = x + [xx]
         else:
-            xx = solve_to(x[no-1], t_array[no-1], t_array[no], delta_t, step, intervals)
+            xx = solve_to(x[no-1], t_array[no-1], t_array[no], delta_t, step, intervals, fun)
             x = x + [xx]
 
     # Plots system of odes
@@ -150,7 +153,7 @@ def error_graph(x, time, time1):
     #     error_list_eul[i+1] = err
 
     for i in range(len(h_values)):
-        ppp = solve_ode1(x, time, time1, 'runge', h_value_list[i])
+        ppp = solve_ode(x, time, time1, 'runge', h_value_list[i], fun)
         final = ppp[-1]
         err = abs(final-true_x)
         error_list_run[i+1] = err
@@ -191,7 +194,7 @@ actual = np.exp(t1)
 #         error_values = error_values + [error1]
 #         delta_t_values = delta_t_values + [solve_to(t0, t1, h_values[i])]
 
-xxx = solve_ode(x0, t0, t1, 'euler', deltat_max)
+xxx = solve_ode(x0, t0, t1, 'euler', deltat_max, f2)
 print(xxx)
 
 # print((error_values))
