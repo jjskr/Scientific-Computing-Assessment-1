@@ -132,7 +132,7 @@ if __name__=='__main__':
     x0 = 1
     t0 = 0
     t1 = 1
-    deltat_max = 0.01
+    deltat_maxx = 0.01
 
     error_values = []
     delta_t_values = []
@@ -140,7 +140,7 @@ if __name__=='__main__':
     actual = np.exp(t1)
     # print(h_values)
 
-    xxx = solve_ode(x0, t0, t1, f, 'euler', deltat_max)
+    xxx = solve_ode(x0, t0, t1, f, 'euler', deltat_maxx)
     # print(xxx)
 
     # print((error_values))
