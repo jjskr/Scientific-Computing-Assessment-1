@@ -43,6 +43,7 @@ def runge_kutta(f, x, t, delta_t):
 def solve_to(fun, x0, t0, t1, h, method='runge'):
 
     t_diff = t1 - t0
+    # print(t_diff)
     intervals = math.floor(t_diff/h)
 
     if method == 'euler':
