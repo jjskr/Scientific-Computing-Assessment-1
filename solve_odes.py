@@ -80,16 +80,6 @@ def solve_ode(x0, t0, t1, eqs, method='runge', deltat_max=0.01):
             xx = solve_to(eqs, x[no-1], t_array[no-1], t_array[no], deltat_max, method)
             x = x + [xx]
 
-    # Plots system of odes
-    # l1 = []
-    # l2 = []
-    # for i in x:
-    #     l1 = l1 + [i[0]]
-    #     l2 = l2 + [i[1]]
-    # plt.plot(l1, t_array)
-    # plt.plot(l2, t_array)
-    # plt.show()
-
     return np.array(x)
 
 
@@ -113,10 +103,10 @@ def error_graph(x, time, time1, fun):
         err = abs(final-true_x)
         error_list_run[i] = err
 
-    print(len(error_list_run))
-    print(len(error_list_eul))
-    print(error_list_eul)
-    print(error_list_run)
+    # print(len(error_list_run))
+    # print(len(error_list_eul))
+    # print(error_list_eul)
+    # print(error_list_run)
 
     ax = plt.gca()
     ax.scatter(h_value_list, error_list_eul)
@@ -138,24 +128,7 @@ if __name__=='__main__':
     delta_t_values = []
 
     actual = np.exp(t1)
-    # print(h_values)
 
     xxx = solve_ode(x0, t0, t1, f, 'euler', deltat_maxx)
-    # print(xxx)
-
-    # print((error_values))
-    # print((h_values))
-
-    # t = np.linspace(t0, t1, 1000)
-    # y = np.exp(t)
-    # plt.plot(array_t, array_x)
-    # plt.plot(t, y)
-    # plt.xlabel('$t$')
-    # plt.ylabel('$x$')
-    # plt.show()
-    # plt.scatter(delta_t_values, error_values)
-    # plt.show()
 
     error_graph(x0, t0, t1, f)
-    # sol = solve_to(f, 1, 0, 1, 0.3)
-    # print(sol)
