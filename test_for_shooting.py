@@ -1,6 +1,4 @@
 import numpy as np
-from num_shooting import shooting
-import solve_odes
 
 
 def hopf(U0, t):
@@ -23,4 +21,3 @@ def true_sol(t):
 
     return [u1, u2]
 
-sol = shooting()

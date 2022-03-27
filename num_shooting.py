@@ -4,7 +4,7 @@ import math
 from solve_odes import solve_ode
 from scipy.optimize import fsolve
 from scipy.integrate import solve_ivp
-from testing import hopf
+from test_for_shooting import hopf
 
 
 def pp_eqs(X, t):
@@ -57,17 +57,21 @@ def shooting_plots(X0, T):
 
 def shooting_one_cycle(X0, T):
 
-    sol = shooting(X0, T)
+    sol = shooting(X0, T, hopf)
     X0, T = sol[:-1], sol[-1]
-    sol_mine = solve_ode(X0, 0, T, pp_eqs)
+    sol_mine = solve_ode(X0, 0, T, hopf)
     plt.plot(sol_mine)
     plt.show()
 
 
-# initial guess
-X0 = 0.2, 0.3
-T = 21
+# # initial guess predator-prey
+# X0 = 0.2, 0.3
+# T = 21
+
+# initial guess hopf
+X0 = 1.5, 1.5
+T = 4
 
 shooting_plots(X0, T)
-# shooting_one_cycle(X0, T)
+shooting_one_cycle(X0, T)
 
