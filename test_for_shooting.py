@@ -21,3 +21,15 @@ def true_sol(t):
 
     return [u1, u2]
 
+
+def hopf_3(U0, t):
+
+    beta = 1
+    sigma = -1
+    u1, u2, u3 = U0
+
+    du1dt = beta * u1 - u2 + sigma * u1 * (u1**2 + u2**2)
+    du2dt = u1 + beta * u2 + sigma * u2 * (u1**2 + u2**2)
+    du3dt = -u3
+
+    return [du1dt, du2dt, du3dt]

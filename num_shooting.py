@@ -5,6 +5,7 @@ from solve_odes import solve_ode
 from scipy.optimize import fsolve
 from scipy.integrate import solve_ivp
 from test_for_shooting import hopf
+from test_for_shooting import hopf_3
 
 
 def pp_eqs(X, t):
@@ -32,7 +33,7 @@ def shooting(X0, T, ode):
         period_cond = [X0[0] - sol[0], X0[1] - sol[1]]
         if len(sol) > 2:
             period_cond = []
-            for num in range(sol):
+            for num in range(len(sol)):
                 i_period_cond = [X0[num] - sol[num]]
                 period_cond = period_cond + i_period_cond
 
@@ -40,7 +41,9 @@ def shooting(X0, T, ode):
 
         return np.r_[phase_cond, period_cond]
 
+    print(np.r_[X0, T])
     sol = fsolve(conditions, np.r_[X0, T])
+    print(sol)
 
     return sol
 
@@ -69,10 +72,14 @@ def shooting_one_cycle(X0, T, ode):
 # X0 = 0.2, 0.3
 # T = 21
 
-# initial guess hopf
-X0 = 1.5, 1.5
-T = 4
+# # initial guess hopf
+# X0 = 1.5, 1.5
+# T = 4
 
-shooting_plots(X0, T, hopf)
-shooting_one_cycle(X0, T, hopf)
+# initial guess hopf 3 odes
+X0 = 1, 1, 1
+T = 8
+
+shooting_plots(X0, T, hopf_3)
+shooting_one_cycle(X0, T, hopf_3)
 
