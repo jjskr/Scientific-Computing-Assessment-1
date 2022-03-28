@@ -21,46 +21,47 @@ def pp_eqs(X, t):
     return [dxdt, dydt]
 
 
-def conditions(U0):
-    print(U0)
-    X0, T = U0[:-1], U0[-1]
-    sols = solve_ode(X0, 0, T, hopf)
-    sol = sols[-1, :]
-    phase_cond = hopf(X0, 0)[0]
-    period_cond = [X0[0] - sol[0], X0[1] - sol[1]]
-    if len(sol) > 2:
-        period_cond = []
-        for num in range(sol):
-            i_period_cond = [X0[num] - sol[num]]
-            period_cond = period_cond + i_period_cond
+def shooting(X0, T, ode):
 
-    print(X0, sol, T)
+    def conditions(U0):
 
-    return np.r_[phase_cond, period_cond]
+        X0, T = U0[:-1], U0[-1]
+        sols = solve_ode(X0, 0, T, ode, 'runge', 0.01)
+        sol = sols[-1, :]
+        phase_cond = ode(X0, 0)[0]
+        period_cond = [X0[0] - sol[0], X0[1] - sol[1]]
+        if len(sol) > 2:
+            period_cond = []
+            for num in range(sol):
+                i_period_cond = [X0[num] - sol[num]]
+                period_cond = period_cond + i_period_cond
 
+        # print(X0, sol, T)
 
-def shooting(X0, T, eqs):
+        return np.r_[phase_cond, period_cond]
 
     sol = fsolve(conditions, np.r_[X0, T])
 
     return sol
 
 
-def shooting_plots(X0, T):
+def shooting_plots(X0, T, ode):
 
-    sol = shooting(X0, T, hopf)
+    sol = shooting(X0, T, ode)
     X0, T = sol[:-1], sol[-1]
-    sol_mine = solve_ode(X0, 0, T, hopf)
+    sol_mine = solve_ode(X0, 0, T, ode, 'runge', 0.01)
     plt.plot(sol_mine[:, 0], sol_mine[:, 1])
     plt.show()
 
 
-def shooting_one_cycle(X0, T):
+def shooting_one_cycle(X0, T, ode):
 
-    sol = shooting(X0, T, hopf)
+    sol = shooting(X0, T, ode)
     X0, T = sol[:-1], sol[-1]
-    sol_mine = solve_ode(X0, 0, T, hopf)
-    plt.plot(sol_mine)
+    sol_mine = solve_ode(X0, 0, T, ode, 'runge', 0.01)
+    time_cycle = math.ceil(float(T)/0.01) + 1
+    t = np.linspace(0, T, time_cycle)
+    plt.plot(t, sol_mine)
     plt.show()
 
 
@@ -72,6 +73,6 @@ def shooting_one_cycle(X0, T):
 X0 = 1.5, 1.5
 T = 4
 
-shooting_plots(X0, T)
-shooting_one_cycle(X0, T)
+shooting_plots(X0, T, hopf)
+shooting_one_cycle(X0, T, hopf)
 
