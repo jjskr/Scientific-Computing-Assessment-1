@@ -3,11 +3,11 @@ import matplotlib.pyplot as plt
 import math
 
 
-def f(x, t):
+def f(x, t, *args):
     return x
 
 
-def f2(X, t):
+def f2(X, t, *args):
     x, y = X
     dxdt = y
     dydt = -x
@@ -19,20 +19,20 @@ def f_true(x, t):
     return x
 
 
-def euler_step(f, x, t, delta_t):
+def euler_step(f, x, t, delta_t, *args):
 
-    x = x + delta_t * np.array(f(x, t))
+    x = x + delta_t * np.array(f(x, t, *args))
     t = t + delta_t
 
     return x, t
 
 
-def runge_kutta(f, x, t, delta_t):
+def runge_kutta(f, x, t, delta_t, *args):
 
-    k1 = np.array(f(x, t))
-    k2 = np.array(f((x + delta_t * k1/2), (t + delta_t/2)))
-    k3 = np.array(f((x + delta_t * k2/2), (t + delta_t/2)))
-    k4 = np.array(f((x + delta_t * k3), (t + delta_t)))
+    k1 = np.array(f(x, t, *args))
+    k2 = np.array(f((x + delta_t * k1/2), (t + delta_t/2), *args))
+    k3 = np.array(f((x + delta_t * k2/2), (t + delta_t/2), *args))
+    k4 = np.array(f((x + delta_t * k3), (t + delta_t), *args))
     k = (k1+2*k2+2*k3+k4)/6
     t = t + delta_t
     x = x + delta_t * k
@@ -40,26 +40,25 @@ def runge_kutta(f, x, t, delta_t):
     return x, t
 
 
-def solve_to(fun, x0, t0, t1, h, method='runge'):
+def solve_to(fun, x0, t0, t1, h, method, *args):
 
     t_diff = t1 - t0
-    # print(t_diff)
     intervals = math.floor(t_diff/h)
 
     if method == 'euler':
         for num in range(intervals):
-            x0, t0 = euler_step(fun, x0, t0, h)
+            x0, t0 = euler_step(fun, x0, t0, h, *args)
         if t0 != t1:
-            x0, t0 = euler_step(fun, x0, t0, t1 - t0)
+            x0, t0 = euler_step(fun, x0, t0, t1 - t0, *args)
     if method == 'runge':
         for num in range(intervals):
-            x0, t0 = runge_kutta(fun, x0, t0, h)
+            x0, t0 = runge_kutta(fun, x0, t0, h, *args)
         if t0 != t1:
-            x0, t0 = runge_kutta(fun, x0, t0, t1 - t0)
+            x0, t0 = runge_kutta(fun, x0, t0, t1 - t0, *args)
     return x0
 
 
-def solve_ode(x0, t0, t1, eqs, method='runge', deltat_max=0.01):
+def solve_ode(x0, t0, t1, eqs, method, deltat_max, *args):
 
     x = [np.array(x0)]
     t_diff = t1-t0
@@ -74,13 +73,13 @@ def solve_ode(x0, t0, t1, eqs, method='runge', deltat_max=0.01):
 
     for no in range(1, len(t_array)):
         if isinstance(x[no-1], list):
-            xx = solve_to(eqs, x[no-1][:], t_array[no-1], t_array[no], deltat_max, method)
+            xx = solve_to(eqs, x[no-1][:], t_array[no-1], t_array[no], deltat_max, method, *args)
             x = x + [xx]
         else:
-            xx = solve_to(eqs, x[no-1], t_array[no-1], t_array[no], deltat_max, method)
+            xx = solve_to(eqs, x[no-1], t_array[no-1], t_array[no], deltat_max, method, *args)
             x = x + [xx]
 
-    return np.array(x)
+    return np.array(x, dtype=object)
 
 
 def error_graph(x, time, time1, fun):
@@ -116,7 +115,7 @@ def error_graph(x, time, time1, fun):
     plt.show()
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
 
     # Initial Conditions
     x0 = 1
@@ -132,3 +131,6 @@ if __name__=='__main__':
     xxx = solve_ode(x0, t0, t1, f, 'euler', deltat_maxx)
 
     error_graph(x0, t0, t1, f)
+    # x0 = 0.25, 0.3
+    # args = [1, 0.16, 0.1]
+    # print(solve_ode(x0, 0, 23, pp_eqs, 'runge', 0.01, args))
