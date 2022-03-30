@@ -92,3 +92,31 @@ deltat_max = 0.01
 # shooting_plots(X0, T, hopf, method, args)
 # shooting_one_cycle(X0, T, hopf, method, args)
 
+hopf_sol = shooting(X0, T, ode, method, args)
+
+X0, T = hopf_sol[:-1], hopf_sol[-1]
+
+x_vals = solve_ode(X0, 0, T, ode, method, deltat_max, args)
+
+t_array = []
+t_array = t_array + [0]
+current_t = 0
+while T - current_t > deltat_max:
+    current_t += deltat_max
+    t_array = t_array + [current_t]
+if current_t != T:
+    t_array = t_array + [T]
+
+actual = []
+for i in range(0, len(t_array)):
+    t = t_array[i]
+    sol = true_sol(t, [1, 0])
+    actual = actual + [sol]
+
+err = []
+for i in range(0, len(x_vals)):
+    error1 = abs(actual[i][0] - x_vals[i][0])
+    error2 = abs(actual[i][1] - x_vals[i][1])
+    if error2 > 1*10**-10:
+        print(error1, error2)
+
