@@ -27,12 +27,12 @@ def pp_eqs(X, t, args):
     return [dxdt, dydt]
 
 
-def shooting(X0, T, ode, method, *args):
+def shooting(X0, T, ode, method, deltat_max, *args):
 
     def conditions(U0):
 
         X0, T = U0[:-1], U0[-1]
-        sols = solve_ode(X0, 0, T, ode, method, 0.01, *args)
+        sols = solve_ode(X0, 0, T, ode, method, deltat_max, *args)
         sol = sols[-1, :]
         phase_cond = ode(X0, 0, *args)[0]
         period_cond = [X0[0] - sol[0], X0[1] - sol[1]]
@@ -51,24 +51,62 @@ def shooting(X0, T, ode, method, *args):
     return sol
 
 
-def shooting_plots(X0, T, ode, method, *args):
+def shooting_plots(X0, T, ode, method, deltat_max, *args):
 
-    sol = shooting(X0, T, ode, method, *args)
+    sol = shooting(X0, T, ode, method, deltat_max, *args)
     X0, T = sol[:-1], sol[-1]
-    sol_mine = solve_ode(X0, 0, T, ode, method, 0.01, *args)
+    sol_mine = solve_ode(X0, 0, T, ode, method, deltat_max, *args)
     plt.plot(sol_mine[:, 0], sol_mine[:, 1])
     plt.show()
 
 
-def shooting_one_cycle(X0, T, ode, method, *args):
+def shooting_one_cycle(X0, T, ode, method, deltat_max, *args):
 
-    sol = shooting(X0, T, ode, method, *args)
+    sol = shooting(X0, T, ode, method, deltat_max, *args)
     X0, T = sol[:-1], sol[-1]
-    sol_mine = solve_ode(X0, 0, T, ode, method, 0.01, *args)
+    sol_mine = solve_ode(X0, 0, T, ode, method, deltat_max, *args)
     time_cycle = math.ceil(float(T)/0.01) + 1
     t = np.linspace(0, T, time_cycle)
     plt.plot(t, sol_mine)
     plt.show()
+
+
+def test_hopf_solutions(X0, T, ode, method, deltat_max, *args):
+
+    test_status = 0
+
+    hopf_sol = shooting(X0, T, ode, method, deltat_max, args)
+
+    X0, T = hopf_sol[:-1], hopf_sol[-1]
+    # print(X0, T)
+
+    x_vals = solve_ode(X0, 0, T, ode, method, deltat_max, args)
+
+    # for i in x_vals:
+    #     print(i[0])
+
+    t_array = []
+    t_array = t_array + [0]
+    current_t = 0
+    while T - current_t > deltat_max:
+        current_t += deltat_max
+        t_array = t_array + [current_t]
+    if current_t != T:
+        t_array = t_array + [T]
+
+    actual = []
+    for i in range(0, len(t_array)):
+        t = t_array[i]
+        sol = true_sol(t, [1, 0])
+        actual = actual + [sol]
+
+    for i in range(0, len(x_vals)):
+        error1 = abs(actual[i][0] - x_vals[i][0])
+        error2 = abs(actual[i][1] - x_vals[i][1])
+        if error2 > 1*10**-6:
+            test_status = 1
+
+    return test_status
 
 
 # # initial guess predator-prey
@@ -80,7 +118,7 @@ method = 'runge'
 ode = hopf
 args = [1, -1]
 X0 = 1.5, 1.5
-T = 4
+T = 5
 deltat_max = 0.01
 
 # X0 = 1.6, 1.2
@@ -89,34 +127,6 @@ deltat_max = 0.01
 # X0 = 1, 1, 1
 # T = 8
 
-# shooting_plots(X0, T, hopf, method, args)
-# shooting_one_cycle(X0, T, hopf, method, args)
-
-hopf_sol = shooting(X0, T, ode, method, args)
-
-X0, T = hopf_sol[:-1], hopf_sol[-1]
-
-x_vals = solve_ode(X0, 0, T, ode, method, deltat_max, args)
-
-t_array = []
-t_array = t_array + [0]
-current_t = 0
-while T - current_t > deltat_max:
-    current_t += deltat_max
-    t_array = t_array + [current_t]
-if current_t != T:
-    t_array = t_array + [T]
-
-actual = []
-for i in range(0, len(t_array)):
-    t = t_array[i]
-    sol = true_sol(t, [1, 0])
-    actual = actual + [sol]
-
-err = []
-for i in range(0, len(x_vals)):
-    error1 = abs(actual[i][0] - x_vals[i][0])
-    error2 = abs(actual[i][1] - x_vals[i][1])
-    if error2 > 1*10**-10:
-        print(error1, error2)
-
+# shooting_plots(X0, T, hopf, method, deltat_max, args)
+# shooting_one_cycle(X0, T, hopf, method, deltat_max, args)
+# test_hopf_solutions(X0, T, ode, method, deltat_max, *args)
