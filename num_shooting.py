@@ -4,18 +4,18 @@ import math
 from solve_odes import solve_ode
 from scipy.optimize import fsolve
 from scipy.integrate import solve_ivp
-from test_for_shooting import hopf
-from test_for_shooting import hopf_3
-from test_for_shooting import true_sol
 
 
-def pp_eqs(X, t, args):
+def pp_eqs(U0, t, args):
+    """
+    A function that returns the values of the given predator prey functions at (U0, t)
+    :param X: values for x and y
+    :param t: time
+    :param args: list of a, b and d constants
+    :return: solutions to predator prey equations
+    """
 
-    x, y = X
-
-    # a = 1
-    # b = 0.16
-    # d = 0.1
+    x, y = U0
 
     a = args[0]
     b = args[1]
@@ -25,6 +25,25 @@ def pp_eqs(X, t, args):
     dydt = b*y*(1-(y/x))
 
     return [dxdt, dydt]
+
+
+def hopf(U0, t, args):
+    """
+    A function that returns solutions to the hopf equations at (U0, t)
+    :param U0: values for x and y
+    :param t: time
+    :param args: list of beta and sigma constants
+    :return: solutions to hopf equations
+    """
+
+    beta = args[0]
+    sigma = args[1]
+
+    u1, u2 = U0
+    du1dt = beta * u1 - u2 + sigma * u1 * (u1**2 + u2**2)
+    du2dt = u1 + beta * u2 + sigma * u2 * (u1**2 + u2**2)
+
+    return [du1dt, du2dt]
 
 
 def shooting(X0, T, ode, method, deltat_max, *args):
@@ -71,44 +90,6 @@ def shooting_one_cycle(X0, T, ode, method, deltat_max, *args):
     plt.show()
 
 
-def test_hopf_solutions(X0, T, ode, method, deltat_max, *args):
-
-    test_status = 0
-
-    hopf_sol = shooting(X0, T, ode, method, deltat_max, args)
-
-    X0, T = hopf_sol[:-1], hopf_sol[-1]
-    # print(X0, T)
-
-    x_vals = solve_ode(X0, 0, T, ode, method, deltat_max, args)
-
-    # for i in x_vals:
-    #     print(i[0])
-
-    t_array = []
-    t_array = t_array + [0]
-    current_t = 0
-    while T - current_t > deltat_max:
-        current_t += deltat_max
-        t_array = t_array + [current_t]
-    if current_t != T:
-        t_array = t_array + [T]
-
-    actual = []
-    for i in range(0, len(t_array)):
-        t = t_array[i]
-        sol = true_sol(t, [1, 0])
-        actual = actual + [sol]
-
-    for i in range(0, len(x_vals)):
-        error1 = abs(actual[i][0] - x_vals[i][0])
-        error2 = abs(actual[i][1] - x_vals[i][1])
-        if error2 > 1*10**-6:
-            test_status = 1
-
-    return test_status
-
-
 # # initial guess predator-prey
 # X0 = 0.2, 0.3
 # T = 21
@@ -127,6 +108,6 @@ deltat_max = 0.01
 # X0 = 1, 1, 1
 # T = 8
 
-# shooting_plots(X0, T, hopf, method, deltat_max, args)
+shooting_plots(X0, T, hopf, method, deltat_max, args)
 # shooting_one_cycle(X0, T, hopf, method, deltat_max, args)
 # test_hopf_solutions(X0, T, ode, method, deltat_max, *args)
