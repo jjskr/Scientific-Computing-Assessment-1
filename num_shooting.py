@@ -38,7 +38,6 @@ def hopf(U0, t, args):
 
     beta = args[0]
     sigma = args[1]
-
     u1, u2 = U0
     du1dt = beta * u1 - u2 + sigma * u1 * (u1**2 + u2**2)
     du2dt = u1 + beta * u2 + sigma * u2 * (u1**2 + u2**2)
@@ -46,12 +45,16 @@ def hopf(U0, t, args):
     return [du1dt, du2dt]
 
 
-def shooting(X0, T, ode, method, deltat_max, *args):
+def pc(U0, T,  ode, *args):
+    return ode(U0, T, args)[0]
 
-    def conditions(U0):
+
+def shooting(ode):
+
+    def conditions(U0, *args):
 
         X0, T = U0[:-1], U0[-1]
-        sols = solve_ode(X0, 0, T, ode, method, deltat_max, *args)
+        sols = solve_ode(X0, 0, T, ode, 'runge', 0.01, *args)
         sol = sols[-1, :]
         phase_cond = ode(X0, 0, *args)[0]
         period_cond = [X0[0] - sol[0], X0[1] - sol[1]]
@@ -61,29 +64,30 @@ def shooting(X0, T, ode, method, deltat_max, *args):
                 i_period_cond = [X0[num] - sol[num]]
                 period_cond = period_cond + i_period_cond
 
-        # print(X0, sol, T)
-
         return np.r_[phase_cond, period_cond]
 
-    sol = fsolve(conditions, np.r_[X0, T])
+    return conditions
 
+
+def orbit(ode, U0, *args):
+    sol = fsolve(shooting(ode), U0, *args)
     return sol
 
 
-def shooting_plots(X0, T, ode, method, deltat_max, *args):
+def shooting_plots(U0, ode, *args):
 
-    sol = shooting(X0, T, ode, method, deltat_max, *args)
+    sol = orbit(ode, U0, args)
     X0, T = sol[:-1], sol[-1]
-    sol_mine = solve_ode(X0, 0, T, ode, method, deltat_max, *args)
+    sol_mine = solve_ode(X0, 0, T, ode, 'runge', 0.01, *args)
     plt.plot(sol_mine[:, 0], sol_mine[:, 1])
     plt.show()
 
 
-def shooting_one_cycle(X0, T, ode, method, deltat_max, *args):
+def shooting_one_cycle(U0, ode, *args):
 
-    sol = shooting(X0, T, ode, method, deltat_max, *args)
+    sol = orbit(ode, U0, args)
     X0, T = sol[:-1], sol[-1]
-    sol_mine = solve_ode(X0, 0, T, ode, method, deltat_max, *args)
+    sol_mine = solve_ode(X0, 0, T, ode, 'runge', 0.01, *args)
     time_cycle = math.ceil(float(T)/0.01) + 1
     t = np.linspace(0, T, time_cycle)
     plt.plot(t, sol_mine)
@@ -98,9 +102,12 @@ def shooting_one_cycle(X0, T, ode, method, deltat_max, *args):
 method = 'runge'
 ode = hopf
 args = [1, -1]
+U0 = 1.5, 1.5, 5
 X0 = 1.5, 1.5
 T = 5
 deltat_max = 0.01
+
+# print(orbit(ode, U0, args))
 
 # X0 = 1.6, 1.2
 
@@ -108,6 +115,6 @@ deltat_max = 0.01
 # X0 = 1, 1, 1
 # T = 8
 
-shooting_plots(X0, T, hopf, method, deltat_max, args)
-# shooting_one_cycle(X0, T, hopf, method, deltat_max, args)
+# shooting_plots(U0, ode, args)
+# shooting_one_cycle(U0, ode, args)
 # test_hopf_solutions(X0, T, ode, method, deltat_max, *args)
