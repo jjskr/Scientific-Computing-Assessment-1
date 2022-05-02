@@ -42,6 +42,25 @@ def forward_euler(u_j, u_jp1, lmbda):
     return u_j
 
 
+def backward_euler(u_j, u_jp1, lmbda):
+
+    # initialise matrix
+    diag = [[-lmbda] * (mx - 2), [1 + 2 * lmbda] * (mx-1), [-lmbda] * (mx - 2)]
+    ABE = ssp.diags(diag, [-1, 0, 1]).toarray()
+
+    for j in range(0, mt):
+        u_jp1[1:mx] = spsolve(ABE, u_j[1:mx])
+
+        # Boundary conditions
+        u_jp1[0] = 0
+        u_jp1[mx] = 0
+
+        # Save u_j at time t[j+1]
+        u_j[:] = u_jp1[:]
+
+    return u_j
+
+
 def solve_pde(mx, mt, method):
 
     # Set up the numerical environment variables
@@ -64,6 +83,8 @@ def solve_pde(mx, mt, method):
 
     if method == 'FE':
         u_j = forward_euler(u_j, u_jp1, lmbda)
+    if method == 'BE':
+        u_j = backward_euler(u_j, u_jp1, lmbda)
 
     # # Solve the PDE: loop over all time points
     # for j in range(0, mt):
@@ -92,6 +113,6 @@ def results_plot(x, u_j):
 mx = 10  # number of gridpoints in space
 mt = 1000  # number of gridpoints in time
 
-solve_pde(mx, mt, 'FE')
+solve_pde(mx, mt, 'BE')
 
 
