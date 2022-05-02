@@ -61,6 +61,26 @@ def backward_euler(u_j, u_jp1, lmbda):
     return u_j
 
 
+def crank_nicholson(u_j, u_jp1, lmbda):
+
+    diag_A = [[-lmbda/2] * (mx - 1), [1 + lmbda] * mx, [-lmbda/2] * (mx - 1)]
+    diag_B = [[lmbda/2] * (mx - 1), [1 - lmbda] * mx, [lmbda/2] * (mx - 1)]
+    A_CN = ssp.diags(diag_A, [-1, 0, 1])
+    B_CN = ssp.diags(diag_B, [-1, 0, 1])
+
+    for j in range(0, mt):
+        u_jp1[1:] = spsolve(A_CN, B_CN*u_j[1:])
+
+        # Boundary conditions
+        u_jp1[0] = 0
+        u_jp1[mx] = 0
+
+        # Save u_j at time t[j+1]
+        u_j[:] = u_jp1[:]
+
+    return u_j
+
+
 def solve_pde(mx, mt, method):
 
     # Set up the numerical environment variables
@@ -85,6 +105,8 @@ def solve_pde(mx, mt, method):
         u_j = forward_euler(u_j, u_jp1, lmbda)
     if method == 'BE':
         u_j = backward_euler(u_j, u_jp1, lmbda)
+    if method == 'CN':
+        u_j = crank_nicholson(u_j, u_jp1, lmbda)
 
     # # Solve the PDE: loop over all time points
     # for j in range(0, mt):
@@ -113,6 +135,7 @@ def results_plot(x, u_j):
 mx = 10  # number of gridpoints in space
 mt = 1000  # number of gridpoints in time
 
-solve_pde(mx, mt, 'BE')
+solve_pde(mx, mt, 'CN')
+
 
 
