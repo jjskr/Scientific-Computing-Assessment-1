@@ -13,7 +13,7 @@ def f(x, t):
     return x
 
 
-def f2(U0, t, *args):
+def f2(U0, t):
     """
     A function that returns the value of dxdt = y and dydt = -x at (U0, t)
     :param U0: tuple containing x, y values
@@ -178,19 +178,19 @@ def error_graph(x, time, time1, fun):
 if __name__ == '__main__':
 
     # Initial Conditions
-    x0 = 1
-    t0 = 0
-    t1 = 1
-    deltat_maxx = 0.1
-
-    error_values = []
-    delta_t_values = []
+    # x0 = 1
+    # t0 = 0
+    # t1 = 1
+    # deltat_maxx = 0.1
+    #
+    # error_values = []
+    # delta_t_values = []
 
     # actual = np.exp(t1)
 
     # xxx = solve_ode(x0, t0, t1, f, 'euler', deltat_maxx)
 
-    error_graph(x0, t0, t1, f)
+    # error_graph(x0, t0, t1, f)
     # x0 = 0.25, 0.3
     # args = [1, 0.16, 0.1]
     # print(solve_ode(x0, 0, 23, pp_eqs, 'runge', 0.01, args))
