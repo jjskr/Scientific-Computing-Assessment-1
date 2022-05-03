@@ -23,40 +23,82 @@ def u_exact(x, t):
     return y
 
 
-def forward_euler(u_j, u_jp1, lmbda):
+def p(t):
+    return t
 
-    # initialise matrix
-    diag = [[lmbda] * (mx - 2), [1 - 2 * lmbda] * (mx-1), [lmbda] * (mx - 2)]
-    AFE = ssp.diags(diag, [-1, 0, 1]).toarray()
 
-    for j in range(0, mt):
-        u_jp1[1:mx] = np.dot(AFE, u_j[1:mx])
+def q(t):
+    return t
 
-        # Boundary conditions
-        u_jp1[0] = 0
-        u_jp1[mx] = 0
 
-        # Save u_j at time t[j+1]
-        u_j[:] = u_jp1[:]
+def forward_euler(u_j, u_jp1, lmbda, bc, p, q, deltax):
+
+    # # initialise matrix
+    # diag = [[lmbda] * (mx - 2), [1 - 2 * lmbda] * (mx-1), [lmbda] * (mx - 2)]
+    # AFE = ssp.diags(diag, [-1, 0, 1]).toarray()
+    #
+    # for j in range(0, mt):
+    #     u_jp1[1:mx] = np.dot(AFE, u_j[1:mx])
+    #
+    #     # Boundary conditions
+    #     u_jp1[0] = 0
+    #     u_jp1[mx] = 0
+    #
+    #     # Save u_j at time t[j+1]
+    #     u_j[:] = u_jp1[:]
+
+    if bc == 'dirichlet':
+
+        diag = [[lmbda] * (mx - 2), [1 - 2 * lmbda] * (mx - 1), [lmbda] * (mx - 2)]
+        AFE = ssp.diags(diag, [-1, 0, 1]).toarray()
+        add_v = np.zeros(mx - 1)
+
+        for j in range(0, mt - 1):
+            add_v[0] = p(j)
+            add_v[-1] = q(j)
+            add_v_l = add_v * lmbda
+            u_jp1 = np.dot(AFE, u_j[1:mx] + add_v_l)
+
+            u_j = np.zeros(mx + 1)
+            u_j[1:-1] = u_jp1[:]
+            u_j[0] = add_v[0]
+            u_j[-1] = add_v[-1]
 
     return u_j
 
 
-def backward_euler(u_j, u_jp1, lmbda):
+def backward_euler(u_j, u_jp1, lmbda, bc, p, q):
 
-    # initialise matrix
-    diag = [[-lmbda] * (mx - 2), [1 + 2 * lmbda] * (mx-1), [-lmbda] * (mx - 2)]
-    ABE = ssp.diags(diag, [-1, 0, 1]).toarray()
+    # # initialise matrix
+    # diag = [[-lmbda] * (mx - 2), [1 + 2 * lmbda] * (mx-1), [-lmbda] * (mx - 2)]
+    # ABE = ssp.diags(diag, [-1, 0, 1]).toarray()
+    #
+    # for j in range(0, mt):
+    #     u_jp1[1:mx] = spsolve(ABE, u_j[1:mx])
+    #
+    #     # Boundary conditions
+    #     u_jp1[0] = 0
+    #     u_jp1[mx] = 0
+    #
+    #     # Save u_j at time t[j+1]
+    #     u_j[:] = u_jp1[:]
 
-    for j in range(0, mt):
-        u_jp1[1:mx] = spsolve(ABE, u_j[1:mx])
+    if bc == 'dirichlet':
 
-        # Boundary conditions
-        u_jp1[0] = 0
-        u_jp1[mx] = 0
+        diag = [[-lmbda] * (mx - 2), [1 + 2 * lmbda] * (mx - 1), [-lmbda] * (mx - 2)]
+        ABE = ssp.diags(diag, [-1, 0, 1]).toarray()
+        add_v = np.zeros(mx - 1)
 
-        # Save u_j at time t[j+1]
-        u_j[:] = u_jp1[:]
+        for j in range(0, mt - 1):
+            add_v[0] = p(j)
+            add_v[-1] = q(j)
+            add_v_l = add_v * lmbda
+            u_jp1 = spsolve(ABE, u_j[1:mx] + add_v_l)
+
+            u_j = np.zeros(mx + 1)
+            u_j[1:-1] = u_jp1[:]
+            u_j[0] = add_v[0]
+            u_j[-1] = add_v[-1]
 
     return u_j
 
@@ -81,7 +123,7 @@ def crank_nicholson(u_j, u_jp1, lmbda):
     return u_j
 
 
-def solve_pde(mx, mt, method):
+def solve_pde(mx, mt, method, bc, p, q):
 
     # Set up the numerical environment variables
     x = np.linspace(0, L, mx + 1)  # mesh points in space
@@ -102,19 +144,11 @@ def solve_pde(mx, mt, method):
         u_j[i] = u_I(x[i])
 
     if method == 'FE':
-        u_j = forward_euler(u_j, u_jp1, lmbda)
+        u_j = forward_euler(u_j, u_jp1, lmbda, bc, p, q)
     if method == 'BE':
-        u_j = backward_euler(u_j, u_jp1, lmbda)
+        u_j = backward_euler(u_j, u_jp1, lmbda, bc, p, q)
     if method == 'CN':
         u_j = crank_nicholson(u_j, u_jp1, lmbda)
-
-    # # Solve the PDE: loop over all time points
-    # for j in range(0, mt):
-    #     # Forward Euler timestep at inner mesh points
-    #     # PDE discretised at position x[i], time t[j]
-    #     for i in range(1, mx):
-    #         u_jp1[i] = u_j[i] + lmbda * (u_j[i - 1] - 2 * u_j[i] + u_j[i + 1])
-    #
 
     results_plot(x, u_j)
 
@@ -132,10 +166,10 @@ def results_plot(x, u_j):
 
 
 # Set numerical parameters
-mx = 10  # number of gridpoints in space
+mx = 20  # number of gridpoints in space
 mt = 1000  # number of gridpoints in time
 
-solve_pde(mx, mt, 'CN')
+solve_pde(mx, mt, 'BE', 'dirichlet', p, q)
 
 
 
