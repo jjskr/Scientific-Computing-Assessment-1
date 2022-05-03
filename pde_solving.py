@@ -6,8 +6,8 @@ from scipy.sparse.linalg import spsolve
 
 # Set problem parameters/functions
 kappa = 1.0  # diffusion constant
-L = 2.0  # length of spatial domain
-T = 1  # total time to solve for
+L = 1.0  # length of spatial domain
+T = 0.5  # total time to solve for
 
 
 def u_I(x):
@@ -27,20 +27,10 @@ def p(t):
 
 
 def q(t):
-    return 0
+    return 0.01
 
 
 def forward_euler(u_j, u_jp1, lmbda, bc, p, q, deltax):
-
-    # for j in range(0, mt):
-    #     u_jp1[1:mx] = np.dot(AFE, u_j[1:mx])
-    #
-    #     # Boundary conditions
-    #     u_jp1[0] = 0
-    #     u_jp1[mx] = 0
-    #
-    #     # Save u_j at time t[j+1]
-    #     u_j[:] = u_jp1[:]
 
     if bc == 'dirichlet':
 
@@ -80,22 +70,30 @@ def forward_euler(u_j, u_jp1, lmbda, bc, p, q, deltax):
             # u_j[1:-1] = u_jp1[:]
             u_j[0] = add_v[0]
             u_j[-1] = add_v[-1]
+
+    if bc == 'periodic':
+
+        diag = [[lmbda] * (mx - 1), [1 - 2 * lmbda] * mx, [lmbda] * (mx - 1)]
+        AFE = ssp.diags(diag, [-1, 0, 1]).toarray()
+        AFE[0, mx - 1] = lmbda
+        AFE[mx - 1, 0] = lmbda
+        # u_j = u_j[0:-1]
+
+        for j in range(0, mt):
+            # u_j = u_j[0:-1]
             print(u_j)
+            u_jp1 = np.dot(AFE, u_j)
+            u_j = u_jp1
+
+            # u_j = np.zeros(mx+1)
+            # u_j[0:-1] = u_jp1[:]
+            u_j[0] = p(j)
+            u_j[-1] = q(j)
 
     return u_j
 
 
 def backward_euler(u_j, u_jp1, lmbda, bc, p, q):
-
-    # for j in range(0, mt):
-    #     u_jp1[1:mx] = spsolve(ABE, u_j[1:mx])
-    #
-    #     # Boundary conditions
-    #     u_jp1[0] = 0
-    #     u_jp1[mx] = 0
-    #
-    #     # Save u_j at time t[j+1]
-    #     u_j[:] = u_jp1[:]
 
     if bc == 'dirichlet':
 
@@ -118,16 +116,6 @@ def backward_euler(u_j, u_jp1, lmbda, bc, p, q):
 
 
 def crank_nicholson(u_j, u_jp1, lmbda, bc, p, q):
-
-    # for j in range(0, mt):
-    #     u_jp1[1:] = spsolve(A_CN, B_CN*u_j[1:])
-    #
-    #     # Boundary conditions
-    #     u_jp1[0] = 0
-    #     u_jp1[mx] = 0
-    #
-    #     # Save u_j at time t[j+1]
-    #     u_j[:] = u_jp1[:]
 
     if bc == 'dirichlet':
 
@@ -157,6 +145,8 @@ def solve_pde(mx, mt, method, bc, p, q):
 
     # Set up the numerical environment variables
     x = np.linspace(0, L, mx + 1)  # mesh points in space
+    if bc == 'periodic':
+        x = np.linspace(0, L, mx)  # mesh points in space
     t = np.linspace(0, T, mt + 1)  # mesh points in time
     deltax = x[1] - x[0]  # gridspacing in x
     deltat = t[1] - t[0]  # gridspacing in t
@@ -170,8 +160,12 @@ def solve_pde(mx, mt, method, bc, p, q):
     u_jp1 = np.zeros(x.size)  # u at next time step
 
     # Set initial condition
-    for i in range(0, mx + 1):
-        u_j[i] = u_I(x[i])
+    if bc == 'periodic':
+        for i in range(0, mx):
+            u_j[i] = u_I(x[i])
+    else:
+        for i in range(0, mx + 1):
+            u_j[i] = u_I(x[i])
 
     if method == 'FE':
         u_j = forward_euler(u_j, u_jp1, lmbda, bc, p, q, deltax)
@@ -184,21 +178,29 @@ def solve_pde(mx, mt, method, bc, p, q):
 
 
 def results_plot(x, u_j, bc):
-    # Plot the final result and exact solution
-    pl.plot(x, u_j, 'ro', label='num')
-    xx = np.linspace(0, L, 250)
-    pl.plot(xx, u_exact(xx, T), 'b-', label='exact')
-    pl.xlabel('x')
-    pl.ylabel('u(x,0.5)')
-    pl.legend(loc='upper right')
-    pl.show()
+    if bc == 'periodic':
+        # Plot the final result and exact solution
+        x = np.linspace(0, L, mx)  # mesh points in space
+        pl.plot(x, u_j, 'ro', label='num')
+        xx = np.linspace(0, L, 250)
+        pl.plot(xx, u_exact(xx, T), 'b-', label='exact')
+        pl.xlabel('x')
+        pl.ylabel('u(x,0.5)')
+        pl.legend(loc='upper right')
+        pl.show()
+    else:
+        # Plot the final result and exact solution
+        pl.plot(x, u_j, 'ro', label='num')
+        xx = np.linspace(0, L, 250)
+        pl.plot(xx, u_exact(xx, T), 'b-', label='exact')
+        pl.xlabel('x')
+        pl.ylabel('u(x,0.5)')
+        pl.legend(loc='upper right')
+        pl.show()
 
 
 # Set numerical parameters
 mx = 10  # number of gridpoints in space
 mt = 1000  # number of gridpoints in time
 
-solve_pde(mx, mt, 'FE', 'neumann', p, q)
-
-
-
+solve_pde(mx, mt, 'FE', 'periodic', p, q)
