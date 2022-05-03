@@ -10,7 +10,7 @@ L = 1.0  # length of spatial domain
 T = 0.5  # total time to solve for
 
 
-def u_I(x):
+def u_initial(x):
     # initial temperature distribution
     y = np.sin(pi * x / L)
     return y
@@ -27,10 +27,10 @@ def p(t):
 
 
 def q(t):
-    return 0.01
+    return 0
 
 
-def forward_euler(u_j, u_jp1, lmbda, bc, p, q, deltax):
+def forward_euler(u_j, lmbda, bc, p, q, deltax):
 
     if bc == 'dirichlet':
 
@@ -66,10 +66,9 @@ def forward_euler(u_j, u_jp1, lmbda, bc, p, q, deltax):
 
             u_j = np.dot(AFE, u_j + add_v_l)
 
-            # u_j = np.zeros(mx + 1)
-            # u_j[1:-1] = u_jp1[:]
             u_j[0] = add_v[0]
             u_j[-1] = add_v[-1]
+            print(u_j)
 
     if bc == 'periodic':
 
@@ -77,23 +76,19 @@ def forward_euler(u_j, u_jp1, lmbda, bc, p, q, deltax):
         AFE = ssp.diags(diag, [-1, 0, 1]).toarray()
         AFE[0, mx - 1] = lmbda
         AFE[mx - 1, 0] = lmbda
-        # u_j = u_j[0:-1]
 
         for j in range(0, mt):
-            # u_j = u_j[0:-1]
-            print(u_j)
+
             u_jp1 = np.dot(AFE, u_j)
             u_j = u_jp1
 
-            # u_j = np.zeros(mx+1)
-            # u_j[0:-1] = u_jp1[:]
             u_j[0] = p(j)
             u_j[-1] = q(j)
 
     return u_j
 
 
-def backward_euler(u_j, u_jp1, lmbda, bc, p, q):
+def backward_euler(u_j, lmbda, bc, p, q, deltax):
 
     if bc == 'dirichlet':
 
@@ -112,10 +107,47 @@ def backward_euler(u_j, u_jp1, lmbda, bc, p, q):
             u_j[0] = add_v[0]
             u_j[-1] = add_v[-1]
 
+    if bc == 'neumann':
+
+        diag = [[-lmbda] * mx, [1 + 2 * lmbda] * (mx + 1), [-lmbda] * mx]
+        ABE = ssp.diags(diag, [-1, 0, 1]).toarray()
+        ABE[0, 1] = 2 * -lmbda
+        ABE[mx, mx - 1] = 2 * -lmbda
+        print(ABE)
+
+        add_v = np.zeros(mx + 1)
+
+        for j in range(0, mt):
+
+            add_v[0] = -p(j)
+            add_v[-1] = q(j)
+
+            add_v_l = 2 * add_v * lmbda * deltax
+
+            u_j = spsolve(ABE, u_j + add_v_l)
+
+            u_j[0] = -add_v[0]
+            u_j[-1] = add_v[-1]
+
+    if bc == 'periodic':
+
+        diag = [[-lmbda] * (mx-1), [1 + 2 * lmbda] * mx, [-lmbda] * (mx-1)]
+        ABE = ssp.diags(diag, [-1, 0, 1]).toarray()
+        ABE[0, mx - 1] = lmbda
+        ABE[mx - 1, 0] = lmbda
+
+        for j in range(0, mt):
+
+            u_jp1 = spsolve(ABE, u_j)
+            u_j = u_jp1
+
+            u_j[0] = p(j)
+            u_j[-1] = q(j)
+
     return u_j
 
 
-def crank_nicholson(u_j, u_jp1, lmbda, bc, p, q):
+def crank_nicholson(u_j, lmbda, bc, p, q, deltax):
 
     if bc == 'dirichlet':
 
@@ -138,6 +170,46 @@ def crank_nicholson(u_j, u_jp1, lmbda, bc, p, q):
             u_j[0] = add_v[0]
             u_j[-1] = add_v[-1]
 
+    if bc == 'neumann':
+
+        diag_A = [[-lmbda / 2] * mx, [1 + lmbda] * (mx+1), [-lmbda / 2] * mx]
+        diag_B = [[lmbda / 2] * mx, [1 - lmbda] * (mx+1), [lmbda / 2] * mx]
+        A_CN = ssp.diags(diag_A, [-1, 0, 1])
+        B_CN = ssp.diags(diag_B, [-1, 0, 1])
+
+        print(A_CN, B_CN)
+
+        add_v = np.zeros(mx + 1)
+
+        for j in range(0, mt):
+            add_v[0] = -p(j)
+            add_v[-1] = q(j)
+
+            add_v_l = 2 * add_v * lmbda * deltax
+
+            u_j = spsolve(A_CN, B_CN*u_j + add_v_l)
+
+            # u_j = np.zeros(mx + 1)
+            # u_j[1:-1] = u_jp1[:]
+            u_j[0] = add_v[0]
+            u_j[-1] = add_v[-1]
+
+    if bc == 'periodic':
+
+        diag_A = [[-lmbda/2] * (mx-1), [1 + lmbda] * mx, [-lmbda/2] * (mx-1)]
+        diag_B = [[lmbda / 2] * (mx-1), [1 - lmbda] * mx, [lmbda / 2] * (mx-1)]
+
+        A_CN = ssp.diags(diag_A, [-1, 0, 1])
+        B_CN = ssp.diags(diag_B, [-1, 0, 1])
+
+        for j in range(0, mt):
+
+            u_jp1 = spsolve(A_CN, B_CN*u_j)
+            u_j = u_jp1
+
+            u_j[0] = p(j)
+            u_j[-1] = q(j)
+
     return u_j
 
 
@@ -157,22 +229,21 @@ def solve_pde(mx, mt, method, bc, p, q):
 
     # Set up the solution variables
     u_j = np.zeros(x.size)  # u at current time step
-    u_jp1 = np.zeros(x.size)  # u at next time step
 
     # Set initial condition
     if bc == 'periodic':
         for i in range(0, mx):
-            u_j[i] = u_I(x[i])
+            u_j[i] = u_initial(x[i])
     else:
         for i in range(0, mx + 1):
-            u_j[i] = u_I(x[i])
+            u_j[i] = u_initial(x[i])
 
     if method == 'FE':
-        u_j = forward_euler(u_j, u_jp1, lmbda, bc, p, q, deltax)
+        u_j = forward_euler(u_j, lmbda, bc, p, q, deltax)
     if method == 'BE':
-        u_j = backward_euler(u_j, u_jp1, lmbda, bc, p, q)
+        u_j = backward_euler(u_j, lmbda, bc, p, q, deltax)
     if method == 'CN':
-        u_j = crank_nicholson(u_j, u_jp1, lmbda, bc, p, q)
+        u_j = crank_nicholson(u_j, lmbda, bc, p, q, deltax)
 
     results_plot(x, u_j, bc)
 
@@ -203,4 +274,4 @@ def results_plot(x, u_j, bc):
 mx = 10  # number of gridpoints in space
 mt = 1000  # number of gridpoints in time
 
-solve_pde(mx, mt, 'FE', 'periodic', p, q)
+solve_pde(mx, mt, 'CN', 'dirichlet', p, q)
