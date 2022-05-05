@@ -275,11 +275,16 @@ def crank_nicholson(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
     return u_j
 
 
-def solve_pde(mx, mt, method, bc, p, q, kappa=0.5):
+def solve_pde(mx, mt, method, bc, p, q, args):
 
     # kappa = 1.0  # diffusion constant
-    L = 1.0  # length of spatial domain
-    T = 0.5  # total time to solve for
+    # L = 1.0  # length of spatial domain
+    # T = 0.1  # total time to solve for
+    kappa = args[0]
+    L = args[1]
+    T = args[2]
+
+    print(T)
 
     def u_initial(x):
         # initial temperature distribution
@@ -313,7 +318,7 @@ def solve_pde(mx, mt, method, bc, p, q, kappa=0.5):
             pl.ylabel('u(x,0.5)')
             pl.legend(loc='upper right')
             pl.show()
-    print(kappa)
+
     # Set up the numerical environment variables
     x = np.linspace(0, L, mx + 1)  # mesh points in space
 
@@ -379,13 +384,15 @@ if __name__ == '__main__':
     # Set problem parameters/functions
     kappa = 1.0  # diffusion constant
     L = 1.0  # length of spatial domain
-    T = 0.5  # total time to solve for
+    T = 0.1  # total time to solve for
+
+    args = [1, 1, 0.1]
 
     # Set numerical parameters
     mx = 30  # number of gridpoints in space
     mt = 1000  # number of gridpoints in time
 
-    solve_pde(mx, mt, 'FE', 'neumann', p, q, 1)
+    solve_pde(mx, mt, 'CN', 'dirichlet', p, q, args)
 
     # cn - weird results for periodic
     # be - weird for periodic and neumann

@@ -55,10 +55,10 @@ def nat_continuation(f, U0, par_min, par_max, par_split, discretisation, solver=
 
     params = np.linspace(par_min, par_max, par_split)
 
-    solutions = []
+    solut_list = []
 
     if solver == 'cont_pde':
-        rou = 8
+        rou = 10
         solver = cont_pde
     else:
         rou = 4
@@ -67,9 +67,9 @@ def nat_continuation(f, U0, par_min, par_max, par_split, discretisation, solver=
         # print(U0, par)
         U0 = solver(discretisation(f), U0, par)
         U0 = np.round(U0, rou)
-        solutions = solutions + [U0]
+        solut_list = solut_list + [U0]
 
-    return params, solutions
+    return params, solut_list
 
 
 def psuedo_continuation(ode, U0, par_min, par_max, par_split, discretisation):
@@ -128,9 +128,9 @@ if __name__ == '__main__':
     pmax = -1
     pstep = 34
 
-    par_list, solutions = nat_continuation(hopfm, U0, pmin, pmax, pstep, shooting)
-    plt.plot(par_list, solutions)
-    plt.show()
+    # par_list, solutions = nat_continuation(hopfm, U0, pmin, pmax, pstep, shooting)
+    # plt.plot(par_list, solutions)
+    # plt.show()
 
     # U0 = 1.4, 0, 6.3
     # params = [2, -1]
@@ -156,7 +156,7 @@ if __name__ == '__main__':
     L = 1.0  # length of spatial domain
     T = 0.5  # total time to solve for
 
-    mx = 10  # number of gridpoints in space
+    mx = 30  # number of gridpoints in space
     mt = 1000  # number of gridpoints in time
 
 
@@ -175,9 +175,10 @@ if __name__ == '__main__':
 
 
     # had to make function calling pde solver with 2 arguments
-    def pdef(U0, time):
+    def pdef(U0, arg):
 
-        u_j = solve_pde(mx, mt, 'CN', 'dirichlet', p, q, time)
+        args = [arg, 1, 0.5]
+        u_j = solve_pde(mx, mt, 'CN', 'dirichlet', p, q, args)
 
         return u_j
 
@@ -186,7 +187,15 @@ if __name__ == '__main__':
         return f(U0, args)
 
 
-    # param, sols = nat_continuation(pdef, np.zeros(mx+1), 1, 2, 10, lambda x: x, cont_pde)
+    param, sols = nat_continuation(pdef, np.zeros(mx+1), 0.1, 0.5, 10, lambda x: x, 'cont_pde')
     # print(sols[-1], 'solutions')
-    #
+    t = np.linspace(0, T, mx + 1)  # mesh points in time
+    j=0
+    for i in sols:
+        ka = np.round(param[j], 4)
+        ka = str(ka)
+        plt.plot(t, i, label='kappa = ' + ka)
+        plt.legend()
+        j += 1
+    plt.show()
     # solve_pde(mx, mt, 'CN', 'dirichlet', p, q, 2)
