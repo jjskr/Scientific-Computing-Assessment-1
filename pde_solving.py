@@ -9,7 +9,7 @@ warnings.filterwarnings('ignore', category=ssp.SparseEfficiencyWarning)
 
 
 def p(t):
-    return 0.01
+    return 0
 
 
 def q(t):
@@ -24,16 +24,38 @@ def forward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt):
         AFE = ssp.diags(diag, [-1, 0, 1]).toarray()
         add_v = np.zeros(mx - 1)
 
+        # for j in range(0, mt):
+        #
+        #     add_v[0] = p(j)
+        #     add_v[-1] = q(j)
+        #     add_v_l = add_v * lmbda
+        #     u_jp1 = np.dot(AFE, u_j[1:mx] + add_v_l)
+        #     u_j = np.zeros(mx + 1)
+        #     u_j[1:-1] = u_jp1[:]
+        #     u_j[0] = add_v[0]
+        #     u_j[-1] = add_v[-1]
+
+        print(len(u_j))
+        print(len(AFE))
+
+        u_j = u_j[1:mx]
+
         for j in range(0, mt):
             add_v[0] = p(j)
             add_v[-1] = q(j)
             add_v_l = add_v * lmbda
-            u_jp1 = np.dot(AFE, u_j[1:mx] + add_v_l)
+            u_jp1 = np.dot(AFE, u_j + add_v_l)
+            # u_j = np.zeros(mx + 1)
+            # u_j[1:-1] = u_jp1[:]
+            # u_j[0] = add_v[0]
+            # u_j[-1] = add_v[-1]
+            u_j = u_jp1
 
-            u_j = np.zeros(mx + 1)
-            u_j[1:-1] = u_jp1[:]
-            u_j[0] = add_v[0]
-            u_j[-1] = add_v[-1]
+        u_jj = np.zeros(mx+1)
+        u_jj[1:mx] = u_j
+        u_jj[0] = p(j)
+        u_jj[-1] = q(j)
+        u_j = u_jj
 
     if bc == 'neumann':
 
@@ -116,8 +138,8 @@ def backward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt):
 
             u_j = spsolve(ABE, u_j + add_v_l)
 
-            u_j[0] = -add_v[0]
-            u_j[-1] = add_v[-1]
+            # u_j[0] = -add_v[0]
+            # u_j[-1] = add_v[-1]
 
     if bc == 'periodic':
 
@@ -244,7 +266,7 @@ def solve_pde(mx, mt, method, bc, p, q, T=0.5):
             x = np.linspace(0, L, mx)  # mesh points in space
             pl.plot(x, u_j, 'ro', label='num')
             xx = np.linspace(0, L, 250)
-            pl.plot(xx, u_exact(xx, T), 'b-', label='exact')
+            # pl.plot(xx, u_exact(xx, T), 'b-', label='exact')
             pl.xlabel('x')
             pl.ylabel('u(x,0.5)')
             pl.legend(loc='upper right')
@@ -327,12 +349,18 @@ if __name__ == '__main__':
     T = 0.5  # total time to solve for
 
     # Set numerical parameters
-    mx = 10  # number of gridpoints in space
+    mx = 300  # number of gridpoints in space
     mt = 1000  # number of gridpoints in time
 
-    solve_pde(mx, mt, 'CN', 'dirichlet', p, q)
+    solve_pde(mx, mt, 'BE', 'dirichlet', p, q)
 
     # cn - weird results for periodic
     # be - weird for periodic and neumann
 
     # sort periodic for be and cn
+
+
+# report
+
+# mesh fourier number exceeding 0.5 results in unstable results for forward euler
+# backward euler and crank nicholson return accurate results no matter what value
