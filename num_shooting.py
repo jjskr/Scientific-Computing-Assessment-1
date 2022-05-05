@@ -9,7 +9,7 @@ from scipy.integrate import solve_ivp
 def pp_eqs(U0, t, args):
     """
     A function that returns the values of the given predator prey functions at (U0, t)
-    :param X: values for x and y
+    :param U0: values for x and y
     :param t: time
     :param args: list of a, b and d constants
     :return: solutions to predator prey equations
@@ -45,11 +45,16 @@ def hopf(U0, t, args):
     return [du1dt, du2dt]
 
 
-def pc(U0, T,  ode, *args):
+def pc_hopf(U0, T,  ode, *args):
     return ode(U0, T, args)[0]
 
 
 def shooting(ode):
+    """
+    Uses chosen ODE to set function to solve to find orbit cycle
+    :param ode: System of odes
+    :return: Conditions to solve as a function
+    """
 
     def conditions(U0, *args):
 
@@ -70,6 +75,13 @@ def shooting(ode):
 
 
 def orbit(ode, U0, *args):
+    """
+    Calculates solution to shooting(ode) using fsolve
+    :param ode: System of odes to solve for
+    :param U0: Initial conditions
+    :param args: Arguments needed by system of odes
+    :return: Solution of initial conditions and time period of one orbit in the form of an array
+    """
     sol = fsolve(shooting(ode), U0, *args)
     return sol
 
@@ -94,27 +106,32 @@ def shooting_one_cycle(U0, ode, *args):
     plt.show()
 
 
-# # initial guess predator-prey
-# X0 = 0.2, 0.3
-# T = 21
+if __name__ == '__main__':
 
-# initial guess hopf
-method = 'runge'
-ode = hopf
-args = [1, -1]
-U0 = 1.5, 1.5, 5
-X0 = 1.5, 1.5
-T = 5
-deltat_max = 0.01
+    # # initial guess predator-prey
+    X0 = 0.2, 0.3
+    T = 21
+    U0 = 0.2, 0.3, 21
+    args = [1, 0.1, 0.1]
+    ode = pp_eqs
 
-# print(orbit(ode, U0, args))
+    # initial guess hopf
+    method = 'runge'
+    # ode = hopf
+    # args = [1, -1]
+    # U0 = 1.5, 1.5, 5
+    # X0 = 1.5, 1.5
+    # T = 5
 
-# X0 = 1.6, 1.2
+    deltat_max = 0.01
 
-# # initial guess hopf 3 odes
-# X0 = 1, 1, 1
-# T = 8
+    # print(orbit(ode, U0, args))
 
-# shooting_plots(U0, ode, args)
-# shooting_one_cycle(U0, ode, args)
-# test_hopf_solutions(X0, T, ode, method, deltat_max, *args)
+    # X0 = 1.6, 1.2
+    # # initial guess hopf 3 odes
+    # X0 = 1, 1, 1
+    # T = 8
+
+    # shooting_plots(U0, ode, args)
+    # shooting_one_cycle(U0, ode, args)
+    # test_hopf_solutions(X0, T, ode, method, deltat_max, *args)

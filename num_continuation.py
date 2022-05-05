@@ -39,16 +39,35 @@ def hopfm(U0, t, args):
 
 
 def nat_continuation(f, U0, par_min, par_max, par_split, discretisation, solver=fsolve):
+    """
+    Performs natural parameter continuation on chosen set of ODEs returning parameter list and corresponding solution
+    for each parameter value
+
+    :param f: System of ODEs to solve
+    :param U0: Initial conditions
+    :param par_min: Starting parameter value
+    :param par_max: End parameter value
+    :param par_split: Number of intervals between parameter range
+    :param discretisation: Discretisation to use
+    :param solver: Type of solver to use. (only implemented fsolve and cont_pde for pdes)
+    :return: List of parameters and solutions at each parameter value
+    """
 
     params = np.linspace(par_min, par_max, par_split)
 
     solutions = []
 
+    if solver == 'cont_pde':
+        rou = 8
+        solver = cont_pde
+    else:
+        rou = 4
+
     for par in params:
-        print(U0, par)
+        # print(U0, par)
         U0 = solver(discretisation(f), U0, par)
-        U0 = np.round(U0, 5)
-        solutions = solutions + [U0[0]]
+        U0 = np.round(U0, rou)
+        solutions = solutions + [U0]
 
     return params, solutions
 
@@ -101,17 +120,17 @@ if __name__ == '__main__':
     pmax = 0
     pstep = 50
 
-    par_list, solutions = nat_continuation(hopfn, U0, pmin, pmax, pstep, shooting)
-    plt.plot(par_list, solutions)
-    plt.show()
+    # par_list, solutions = nat_continuation(hopfn, U0, pmin, pmax, pstep, shooting)
+    # plt.plot(par_list, solutions)
+    # plt.show()
 
     pmin = 2
     pmax = -1
     pstep = 34
 
-    # par_list, solutions = nat_continuation(hopfm, U0, pmin, pmax, pstep, shooting)
-    # plt.plot(par_list, solutions)
-    # plt.show()
+    par_list, solutions = nat_continuation(hopfm, U0, pmin, pmax, pstep, shooting)
+    plt.plot(par_list, solutions)
+    plt.show()
 
     # U0 = 1.4, 0, 6.3
     # params = [2, -1]
@@ -121,10 +140,10 @@ if __name__ == '__main__':
     #
     # par_list, solutions = nat_continuation_h(hopf, U0, params, pmin, pmax, pstep, 0, shooting)
 
-    U0 = 1.6
-    pmin = -2
-    pmax = 2
-    pstep = 100
+    # U0 = 1.6
+    # pmin = -2
+    # pmax = 2
+    # pstep = 100
 
     # val1, val2 = psuedo_continuation(cubic_eq, U0, pmin, pmax, pstep, discretisation=lambda x: x)
 
@@ -167,4 +186,7 @@ if __name__ == '__main__':
         return f(U0, args)
 
 
-    # param, sols = nat_continuation(pdef, None, 1, 2, 10, lambda x: x, cont_pde)
+    # param, sols = nat_continuation(pdef, np.zeros(mx+1), 1, 2, 10, lambda x: x, cont_pde)
+    # print(sols[-1], 'solutions')
+    #
+    # solve_pde(mx, mt, 'CN', 'dirichlet', p, q, 2)

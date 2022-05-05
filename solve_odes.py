@@ -26,7 +26,7 @@ def f2(U0, t):
     return [dxdt, dydt]
 
 
-def f_true(x, t):
+def f_true(t):
     """
     A function that returns the true value of dxdt = x at (x, t)
     :param x: x value
@@ -91,7 +91,12 @@ def solve_to(fun, x0, t0, t1, h, method, *args):
     """
 
     t_diff = t1 - t0
-    intervals = math.floor(t_diff/h)
+
+    try:
+        intervals = math.floor(t_diff/h)
+    except ValueError:
+        print('Solution failed to compute')
+        intervals = 1
 
     if method == 'euler':
         for num in range(intervals):
@@ -142,71 +147,41 @@ def solve_ode(x0, t0, t1, eqs, method, deltat_max, *args):
     return np.array(x, dtype=object)
 
 
-def error_graph(x, time, time1, fun):
-
-    h_value_list = np.logspace(-4, -1, 50)
-    true_x = f_true(x, time1)
-
-    error_list_eul = np.zeros(int(len(h_value_list)))
-    error_list_run = np.zeros(int(len(h_value_list)))
-
-    for i in range(len(h_value_list)):
-        eul_sol = solve_ode(x, time, time1, fun, 'euler', h_value_list[i])
-        final = eul_sol[-1]
-        err = abs(final-true_x)
-        error_list_eul[i] = err
-
-    for i in range(len(h_value_list)):
-        run_sol = solve_ode(x, time, time1, fun, 'runge', h_value_list[i])
-        final = run_sol[-1]
-        err = abs(final-true_x)
-        error_list_run[i] = err
-
-    # print(len(error_list_run))
-    # print(len(error_list_eul))
-    print(error_list_eul)
-    print(error_list_run)
-
-    ax = plt.gca()
-    ax.scatter(h_value_list, error_list_eul)
-    ax.scatter(h_value_list, error_list_run)
-    ax.set_yscale('log')
-    ax.set_xscale('log')
-    plt.show()
-
-
 if __name__ == '__main__':
 
     # Initial Conditions
-    # x0 = 1
-    # t0 = 0
-    # t1 = 1
-    # deltat_maxx = 0.1
-    #
-    # error_values = []
-    # delta_t_values = []
+    x0 = 1
+    t0 = 0
+    t1 = 1
+    deltat_maxx = 0.01
 
-    # actual = np.exp(t1)
+    eul_sol_f = solve_ode(x0, t0, t1, f, 'euler', deltat_maxx)
 
-    # xxx = solve_ode(x0, t0, t1, f, 'euler', deltat_maxx)
+    run_sol_f = solve_ode(x0, t0, t1, f, 'runge', deltat_maxx)
+
+    t = np.linspace(0, 1, 101)
+    plt.plot(t, eul_sol_f)
+    plt.plot(t, run_sol_f)
+    plt.plot(t, f_true(t))
+    plt.show()
 
     # error_graph(x0, t0, t1, f)
     # x0 = 0.25, 0.3
     # args = [1, 0.16, 0.1]
     # print(solve_ode(x0, 0, 23, pp_eqs, 'runge', 0.01, args))
 
-    # Initial Conditions f2
-    t0 = 0
-    t1 = 5000
-    x0 = 1, 1
-    deltat_maxx = 0.4
-    f2_sol = solve_ode(x0, t0, t1, f2, 'runge', deltat_maxx)
-    x = []
-    xdot = []
-
-    for i in range(0, len(f2_sol)):
-        x = x + [f2_sol[i][0]]
-        xdot = xdot + [f2_sol[i][1]]
-
-    plt.plot(x, xdot)
-    plt.show()
+    # # Initial Conditions f2
+    # t0 = 0
+    # t1 = 100
+    # x0 = 1, 1
+    # deltat_maxx = 0.01
+    # f2_sol = solve_ode(x0, t0, t1, f2, 'runge', deltat_maxx)
+    # x = []
+    # xdot = []
+    #
+    # for i in range(0, len(f2_sol)):
+    #     x = x + [f2_sol[i][0]]
+    #     xdot = xdot + [f2_sol[i][1]]
+    #
+    # plt.plot(x, xdot)
+    # plt.show()
