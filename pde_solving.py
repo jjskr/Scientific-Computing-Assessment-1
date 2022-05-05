@@ -9,11 +9,11 @@ warnings.filterwarnings('ignore', category=ssp.SparseEfficiencyWarning)
 
 
 def p(t):
-    return 1
+    return 0
 
 
 def q(t):
-    return 1
+    return 0
 
 
 def forward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
@@ -69,6 +69,8 @@ def forward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
 
         add_v = np.zeros(mx + 1)
 
+        print(AFE)
+
         for j in range(0, mt):
             add_v[0] = -p(t[j])
             add_v[-1] = q(t[j])
@@ -77,8 +79,8 @@ def forward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
 
             u_j = np.dot(AFE, u_j + add_v_l)
 
-            u_j[0] = -add_v[0]
-            u_j[-1] = add_v[-1]
+            # u_j[0] = -add_v[0]
+            # u_j[-1] = add_v[-1]
             # print(u_j)
 
     if bc == 'periodic':
@@ -375,15 +377,15 @@ def solve_pde(mx, mt, method, bc, p, q, kappa=0.5):
 if __name__ == '__main__':
 
     # Set problem parameters/functions
-    kappa = 2.0  # diffusion constant
-    L = 2.0  # length of spatial domain
+    kappa = 1.0  # diffusion constant
+    L = 1.0  # length of spatial domain
     T = 0.5  # total time to solve for
 
     # Set numerical parameters
     mx = 30  # number of gridpoints in space
     mt = 1000  # number of gridpoints in time
 
-    solve_pde(mx, mt, 'CN', 'dirichlet', p, q, 1)
+    solve_pde(mx, mt, 'FE', 'neumann', p, q, 1)
 
     # cn - weird results for periodic
     # be - weird for periodic and neumann
@@ -395,7 +397,14 @@ if __name__ == '__main__':
 # BE - dirichlet - some bugs
 # FE - dirichlet - same bugs
 
+# CN, BE - periodic slightly wrong
+# FE - think okay
+
+# CN - neumann - ok
+
 # report
 
 # mesh fourier number exceeding 0.5 results in unstable results for forward euler
 # backward euler and crank nicholson return accurate results no matter what value
+
+# all work for 0, 0
