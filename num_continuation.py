@@ -132,7 +132,7 @@ def psuedo_continuation(ode, U0, par_min, par_max, par_split, discretisation, so
     par_add = par_min
 
     while par_add < par_max:
-        print(par_add)
+
         # generate sec
         delta_x = sol_lis[i+1] - sol_lis[i]
         delta_p = param_l[i+1] - param_l[i]
