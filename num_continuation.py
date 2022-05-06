@@ -61,10 +61,9 @@ def nat_continuation(f, U0, par_min, par_max, par_split, discretisation, solver=
         rou = 10
         solver = cont_pde
     else:
-        rou = 4
+        rou = 10
 
     for par in params:
-        # print(U0, par)
         U0 = solver(discretisation(f), U0, par)
         U0 = np.round(U0, rou)
         solut_list = solut_list + [U0]
@@ -75,22 +74,41 @@ def nat_continuation(f, U0, par_min, par_max, par_split, discretisation, solver=
 def psuedo_continuation(ode, U0, par_min, par_max, par_split, discretisation):
 
     params = np.linspace(par_min, par_max, par_split)
+
     diff = params[1] - params[0]
     par0 = params[0]
     par1 = par0 + diff
+
+    params, solsnat = nat_continuation(ode, U0, par_min, par_max, par_split, discretisation)
+
     val0 = fsolve(discretisation(ode), U0, par0)
     val1 = fsolve(discretisation(ode), val0, par1)
 
-    # generate sec
-    delta_x = val1 - val0
-    delta_p = par1 - par0
+    print(val1, solsnat[1])
 
-    pred_x = val1 + delta_x
-    pred_p = par1 + delta_p
+    sol_lis = [val0[0], val1[0]]
+    param_l = [par0, par1]
 
-    psuedo_arc = np.dot(val1 - pred_x, delta_x) + np.dot(par1 - pred_p, delta_p)
+    i = 0
 
-    pred_sol = pred_x, pred_p
+    while i < 100:
+        print(sol_lis)
+        # generate sec
+        delta_x = sol_lis[i+1] - sol_lis[i]
+        delta_p = param_l[i+1] - param_l[i]
+
+        pred_x = sol_lis[i+1] + delta_x
+        pred_p = param_l[i+1] + delta_p
+
+        pred_ar = [pred_x, pred_p]
+
+        psuedo_arc = np.dot(sol_lis[i+1] - pred_x, delta_x) + np.dot(param_l[i+1] - pred_p, delta_p)
+
+        pred_sol = pred_x, pred_p
+
+        n_par = pred_p
+
+        i += 1
 
     # solution
 
@@ -140,12 +158,12 @@ if __name__ == '__main__':
     #
     # par_list, solutions = nat_continuation_h(hopf, U0, params, pmin, pmax, pstep, 0, shooting)
 
-    # U0 = 1.6
-    # pmin = -2
-    # pmax = 2
-    # pstep = 100
+    U0 = 1.6
+    pmin = -2
+    pmax = 2
+    pstep = 100
 
-    # val1, val2 = psuedo_continuation(cubic_eq, U0, pmin, pmax, pstep, discretisation=lambda x: x)
+    val1, val2 = psuedo_continuation(cubic_eq, U0, pmin, pmax, pstep, discretisation=lambda x: x)
 
     # plt.plot(par_list, solutions)
     # plt.show()
@@ -167,11 +185,11 @@ if __name__ == '__main__':
 
 
     def p(t):
-        return 0
+        return 3
 
 
     def q(t):
-        return 0
+        return 5
 
 
     # had to make function calling pde solver with 2 arguments
@@ -187,15 +205,17 @@ if __name__ == '__main__':
         return f(U0, args)
 
 
-    param, sols = nat_continuation(pdef, np.zeros(mx+1), 0.1, 0.5, 10, lambda x: x, 'cont_pde')
+    # param, sols = nat_continuation(pdef, np.zeros(mx+1), 0.5, 2, 11, lambda x: x, 'cont_pde')
     # print(sols[-1], 'solutions')
-    t = np.linspace(0, T, mx + 1)  # mesh points in time
-    j=0
-    for i in sols:
-        ka = np.round(param[j], 4)
-        ka = str(ka)
-        plt.plot(t, i, label='kappa = ' + ka)
-        plt.legend()
-        j += 1
-    plt.show()
+    # t = np.linspace(0, T, mx + 1)  # mesh points in time
+    #
+    # j = 0
+    #
+    # for i in sols:
+    #     ka = np.round(param[j], 4)
+    #     ka = str(ka)
+    #     plt.plot(t, i, label='T = ' + ka)
+    #     plt.legend()
+    #     j += 1
+    # plt.show()
     # solve_pde(mx, mt, 'CN', 'dirichlet', p, q, 2)
