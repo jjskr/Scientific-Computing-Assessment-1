@@ -51,7 +51,7 @@ def pc_hopf(U0, T,  ode, *args):
 
 def shooting(ode):
     """
-    Uses chosen ODE to set function to solve to find orbit cycle
+    Uses chosen ODE to set function to solve to find orbit cycle of 2D and 3D systems of ODEs
     :param ode: System of odes
     :return: Conditions to solve as a function
     """
@@ -63,11 +63,9 @@ def shooting(ode):
         sol = sols[-1, :]
         phase_cond = ode(X0, 0, *args)[0]
         period_cond = [X0[0] - sol[0], X0[1] - sol[1]]
-        if len(sol) > 2:
-            period_cond = []
-            for num in range(len(sol)):
-                i_period_cond = [X0[num] - sol[num]]
-                period_cond = period_cond + i_period_cond
+
+        if len(sol) == 3:
+            period_cond = [X0[0] - sol[0], X0[1] - sol[1], X0[2] - sol[2]]
 
         return np.r_[phase_cond, period_cond]
 
@@ -103,6 +101,8 @@ def shooting_one_cycle(U0, ode, *args):
     time_cycle = math.ceil(float(T)/0.01) + 1
     t = np.linspace(0, T, time_cycle)
     plt.plot(t, sol_mine)
+    plt.xlabel('Time (s)')
+    plt.legend(['x', 'y'])
     plt.show()
 
 
@@ -112,7 +112,7 @@ if __name__ == '__main__':
     X0 = 0.2, 0.3
     T = 21
     U0 = 0.2, 0.3, 21
-    args = [1, 0.1, 0.1]
+    args = [1, 0.26, 0.1]
     ode = pp_eqs
 
     # initial guess hopf
@@ -125,7 +125,8 @@ if __name__ == '__main__':
 
     deltat_max = 0.01
 
-    # print(orbit(ode, U0, args))
+    orb = orbit(ode, U0, args)
+    print(orb)
 
     # X0 = 1.6, 1.2
     # # initial guess hopf 3 odes

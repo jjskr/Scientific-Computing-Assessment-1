@@ -21,7 +21,7 @@ def test_input_solve_ode(x0, t0, t1, eqs, method, deltat_max, *args):
     :param method: step method to use
     :param deltat_max: max step size
     :param args: additional arguments needed by ODE(s)
-    :return: nothing if tests pass, message if not
+    :return: nothing if tests pass, message if a test fails
     """
     if isinstance(x0, tuple) or isinstance(x0, int):
         print('starting co-ordinate(s) suitable type')
@@ -109,7 +109,7 @@ def test_input_orbit_shooting(ode, U0, *args):
     :param ode: ODE(s) to solve for
     :param U0: initial conditions (including time)
     :param args: additional arguments to pass to ODE(s)
-    :return: nothing if tests pass, error message if tests fail
+    :return: nothing if tests pass, error message if test fails
     """
 
     try:
@@ -131,8 +131,6 @@ def test_input_orbit_shooting(ode, U0, *args):
     except (IndexError, TypeError):
         print('system of odes not suitable')
         return
-    # print(*args)
-    # print(ode(u0, t0, *args))
 
     try:
         ode(u0, t0, *args)
