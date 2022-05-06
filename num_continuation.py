@@ -1,10 +1,28 @@
 from scipy.optimize import fsolve
 from num_shooting import shooting
 import matplotlib.pyplot as plt
-from num_shooting import hopf
+# from num_shooting import hopf
 import numpy as np
 from pde_solving import solve_pde
 from math import pi
+
+
+def hopf(U0, t, args):
+    """
+    A function that returns solutions to the hopf equations at (U0, t)
+    :param U0: values for x and y
+    :param t: time
+    :param args: list of beta and sigma constants
+    :return: solutions to hopf equations
+    """
+
+    beta = args[0]
+    sigma = args[1]
+    u1, u2 = U0
+    du1dt = beta * u1 - u2 + sigma * u1 * (u1 ** 2 + u2 ** 2)
+    du2dt = u1 + beta * u2 + sigma * u2 * (u1 ** 2 + u2 ** 2)
+
+    return [du1dt, du2dt]
 
 
 def cubic_eq(x, args):
@@ -62,7 +80,7 @@ def nat_continuation(f, U0, par_min, par_max, par_split, discretisation, solver=
         rou = 10
         solver = cont_pde
     else:
-        rou = 10
+        rou = 4
 
     for par in params:
         U0 = solver(discretisation(f), U0, par)
@@ -73,6 +91,10 @@ def nat_continuation(f, U0, par_min, par_max, par_split, discretisation, solver=
 
 
 def psuedo_continuation(ode, U0, par_min, par_max, par_split, discretisation, solver=fsolve):
+
+    if discretisation==shooting:
+        R0 = list(U0)
+        R0 = R0[:-1]
 
     def p_upd(pred):
 
@@ -86,10 +108,7 @@ def psuedo_continuation(ode, U0, par_min, par_max, par_split, discretisation, so
     par0 = params[0]
     par1 = par0 + diff
 
-    # params, solsnat = nat_continuation(ode, U0, par_min, par_max, par_split, discretisation)
-
     val0 = fsolve(discretisation(ode), U0, par0)
-    print(val0)
     val1 = fsolve(discretisation(ode), val0, par1)
 
     sol_lis = [val0[0], val1[0]]
@@ -97,8 +116,10 @@ def psuedo_continuation(ode, U0, par_min, par_max, par_split, discretisation, so
 
     i = 0
 
-    while i < 150:
-        print(i)
+    par_add = par_min
+
+    while par_add < par_max:
+        print(par_add)
         # generate sec
         delta_x = sol_lis[i+1] - sol_lis[i]
         delta_p = param_l[i+1] - param_l[i]
@@ -176,21 +197,21 @@ if __name__ == '__main__':
     pmax = 2
     pstep = 100
 
-    # sol_l, p_l = psuedo_continuation(cubic_eq, U0, pmin, pmax, pstep, discretisation=lambda x: x)
-    # plt.plot(p_l, sol_l, label='pseudo-arclength')
-    # plt.legend()
-    # plt.show()
+    sol_l, p_l = psuedo_continuation(cubic_eq, U0, pmin, pmax, pstep, discretisation=lambda x: x)
+    plt.plot(p_l, sol_l, label='pseudo-arclength')
+    plt.legend()
+    plt.show()
     # plt.plot(par_list, solutions)
-    # plt.show()
+    plt.show()
 
-    U0 = 1.4, 0
+    U0 = 1.4, 0, 6.3
     pmin = -1
     pmax = 2
     pstep = 100
 
-    sol_l, p_l = psuedo_continuation(hopfn, U0, pmin, pmax, pstep, shooting)
-    plt.plot(p_l, sol_l)
-    plt.show()
+    # sol_l, p_l = psuedo_continuation(hopfn, U0, pmin, pmax, pstep, shooting)
+    # plt.plot(p_l, sol_l)
+    # plt.show()
 
     # Attempting pde continuation
 
@@ -216,7 +237,6 @@ if __name__ == '__main__':
         return 5
 
 
-    # had to make function calling pde solver with 2 arguments
     def pdef(U0, arg):
 
         args = [arg, 1, 0.5]
