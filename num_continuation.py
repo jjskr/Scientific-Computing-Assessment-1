@@ -20,6 +20,7 @@ def hopfn(U0, t, args):
     beta = args
 
     u1, u2 = U0
+
     du1dt = beta * u1 - u2 - u1 * (u1**2 + u2**2)
     du2dt = u1 + beta * u2 - u2 * (u1**2 + u2**2)
 
@@ -71,7 +72,13 @@ def nat_continuation(f, U0, par_min, par_max, par_split, discretisation, solver=
     return params, solut_list
 
 
-def psuedo_continuation(ode, U0, par_min, par_max, par_split, discretisation):
+def psuedo_continuation(ode, U0, par_min, par_max, par_split, discretisation, solver=fsolve):
+
+    def p_upd(pred):
+
+        par = pred
+
+        return par
 
     params = np.linspace(par_min, par_max, par_split)
 
@@ -79,20 +86,19 @@ def psuedo_continuation(ode, U0, par_min, par_max, par_split, discretisation):
     par0 = params[0]
     par1 = par0 + diff
 
-    params, solsnat = nat_continuation(ode, U0, par_min, par_max, par_split, discretisation)
+    # params, solsnat = nat_continuation(ode, U0, par_min, par_max, par_split, discretisation)
 
     val0 = fsolve(discretisation(ode), U0, par0)
+    print(val0)
     val1 = fsolve(discretisation(ode), val0, par1)
-
-    print(val1, solsnat[1])
 
     sol_lis = [val0[0], val1[0]]
     param_l = [par0, par1]
 
     i = 0
 
-    while i < 100:
-        print(sol_lis)
+    while i < 150:
+        print(i)
         # generate sec
         delta_x = sol_lis[i+1] - sol_lis[i]
         delta_p = param_l[i+1] - param_l[i]
@@ -102,11 +108,18 @@ def psuedo_continuation(ode, U0, par_min, par_max, par_split, discretisation):
 
         pred_ar = [pred_x, pred_p]
 
-        psuedo_arc = np.dot(sol_lis[i+1] - pred_x, delta_x) + np.dot(param_l[i+1] - pred_p, delta_p)
+        pred_ar = np.array(pred_ar)
 
-        pred_sol = pred_x, pred_p
+        # psuedo_arc = np.dot(sol_lis[i+1] - pred_x, delta_x) + np.dot(param_l[i+1] - pred_p, delta_p)
 
-        n_par = pred_p
+        sol = solver(lambda cur_s: np.append(discretisation(ode)(cur_s[:-1], p_upd(cur_s[-1])),
+                                                    np.dot(cur_s[:-1] - pred_x, delta_x) + np.dot(cur_s[-1] - pred_p,
+                                                                                                  delta_p)), pred_ar)
+
+        sol_add = sol[:-1][0]
+        par_add = sol[-1]
+        sol_lis = sol_lis + [sol_add]
+        param_l = param_l + [par_add]
 
         i += 1
 
@@ -118,7 +131,7 @@ def psuedo_continuation(ode, U0, par_min, par_max, par_split, discretisation):
     # val1 = sol
     # val0 = val1
 
-    return val0, val1
+    return sol_lis, param_l
 
 
 if __name__ == '__main__':
@@ -130,7 +143,7 @@ if __name__ == '__main__':
     pstep = 100
 
     # par_list, solutions = nat_continuation(cubic_eq, U0, pmin, pmax, pstep, discretisation=lambda x: x)
-    # plt.plot(par_list, solutions)
+    # plt.plot(par_list, solutions, label='natural parameter')
     # plt.show()
 
     U0 = 1.4, 0, 6.3
@@ -158,15 +171,26 @@ if __name__ == '__main__':
     #
     # par_list, solutions = nat_continuation_h(hopf, U0, params, pmin, pmax, pstep, 0, shooting)
 
-    U0 = 1.6
+    U0 = 1
     pmin = -2
     pmax = 2
     pstep = 100
 
-    val1, val2 = psuedo_continuation(cubic_eq, U0, pmin, pmax, pstep, discretisation=lambda x: x)
-
+    # sol_l, p_l = psuedo_continuation(cubic_eq, U0, pmin, pmax, pstep, discretisation=lambda x: x)
+    # plt.plot(p_l, sol_l, label='pseudo-arclength')
+    # plt.legend()
+    # plt.show()
     # plt.plot(par_list, solutions)
     # plt.show()
+
+    U0 = 1.4, 0
+    pmin = -1
+    pmax = 2
+    pstep = 100
+
+    sol_l, p_l = psuedo_continuation(hopfn, U0, pmin, pmax, pstep, shooting)
+    plt.plot(p_l, sol_l)
+    plt.show()
 
     # Attempting pde continuation
 
