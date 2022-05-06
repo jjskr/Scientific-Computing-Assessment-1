@@ -125,8 +125,7 @@ def solve_ode(x0, t0, t1, eqs, method, deltat_max, *args):
     :return: x values at each time value
     """
 
-    x = [np.array(x0)]
-    t_diff = t1-t0
+    x = [x0]
     t_array = []
     t_array = t_array + [t0]
     current_t = t0
@@ -144,7 +143,7 @@ def solve_ode(x0, t0, t1, eqs, method, deltat_max, *args):
             xx = solve_to(eqs, x[no-1], t_array[no-1], t_array[no], deltat_max, method, *args)
             x = x + [xx]
 
-    return np.array(x, dtype=object)
+    return np.array(x)
 
 
 if __name__ == '__main__':
@@ -155,15 +154,15 @@ if __name__ == '__main__':
     t1 = 1
     deltat_maxx = 0.01
 
-    eul_sol_f = solve_ode(x0, t0, t1, f, 'euler', deltat_maxx)
-
-    run_sol_f = solve_ode(x0, t0, t1, f, 'runge', deltat_maxx)
-
-    t = np.linspace(0, 1, 101)
-    plt.plot(t, eul_sol_f)
-    plt.plot(t, run_sol_f)
-    plt.plot(t, f_true(t))
-    plt.show()
+    # eul_sol_f = solve_ode(x0, t0, t1, f, 'euler', deltat_maxx)
+    #
+    # run_sol_f = solve_ode(x0, t0, t1, f, 'runge', deltat_maxx)
+    #
+    # t = np.linspace(0, 1, 101)
+    # plt.plot(t, eul_sol_f)
+    # plt.plot(t, run_sol_f)
+    # plt.plot(t, f_true(t))
+    # plt.show()
 
     # error_graph(x0, t0, t1, f)
     # x0 = 0.25, 0.3
@@ -171,17 +170,29 @@ if __name__ == '__main__':
     # print(solve_ode(x0, 0, 23, pp_eqs, 'runge', 0.01, args))
 
     # # Initial Conditions f2
-    # t0 = 0
-    # t1 = 100
-    # x0 = 1, 1
-    # deltat_maxx = 0.01
-    # f2_sol = solve_ode(x0, t0, t1, f2, 'runge', deltat_maxx)
-    # x = []
-    # xdot = []
-    #
-    # for i in range(0, len(f2_sol)):
-    #     x = x + [f2_sol[i][0]]
-    #     xdot = xdot + [f2_sol[i][1]]
-    #
-    # plt.plot(x, xdot)
-    # plt.show()
+    t0 = 0
+    t1 = 100
+    x0 = 1, 1
+    deltat_maxx = 0.01
+    f2_sol = solve_ode(x0, t0, t1, f2, 'runge', deltat_maxx)
+    f2_sol_eul = solve_ode(x0, t0, t1, f2, 'euler', deltat_maxx)
+    x = []
+    xdot = []
+
+    for i in range(0, len(f2_sol)):
+        x = x + [f2_sol[i][0]]
+        xdot = xdot + [f2_sol[i][1]]
+
+    xe = []
+    xdote = []
+
+    for i in range(0, len(f2_sol_eul)):
+        xe = xe + [f2_sol_eul[i][0]]
+        xdote = xdote + [f2_sol_eul[i][1]]
+
+    plt.plot(x, xdot, label='Runge')
+    plt.plot(xe, xdote, label='Euler')
+    plt.xlabel('x')
+    plt.ylabel('dxdt')
+    plt.legend()
+    plt.show()

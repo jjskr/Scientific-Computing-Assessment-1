@@ -350,7 +350,7 @@ def solve_pde(mx, mt, method, bc, p, q, args):
     if method == 'CN':
         u_j = crank_nicholson(u_j, lmbda, bc, p, q, deltax, mx, mt, t)
 
-    results_plot(x, u_j, bc, mx, mt, T)
+    # results_plot(x, u_j, bc, mx, mt, T)
 
     return u_j
 
@@ -381,19 +381,61 @@ def solve_pde(mx, mt, method, bc, p, q, args):
 
 if __name__ == '__main__':
 
+    def u_exact(x, t):
+        # the exact solution
+        y = np.exp(-kappa * (pi ** 2 / L ** 2) * t) * np.sin(pi * x / L)
+        return y
+
     # Set problem parameters/functions
     kappa = 1.0  # diffusion constant
     L = 1.0  # length of spatial domain
-    T = 0.1  # total time to solve for
+    T = 0.7  # total time to solve for
 
-    args = [1, 1, 0.1]
+    args = [1, 1, 0.7]
 
     # Set numerical parameters
-    mx = 30  # number of gridpoints in space
+    mx = 25  # number of gridpoints in space
     mt = 1000  # number of gridpoints in time
 
-    solve_pde(mx, mt, 'CN', 'dirichlet', p, q, args)
+    u_FE = solve_pde(mx, mt, 'FE', 'dirichlet', p, q, args)
+    u_BE = solve_pde(mx, mt, 'BE', 'dirichlet', p, q, args)
+    u_CN = solve_pde(mx, mt, 'CN', 'dirichlet', p, q, args)
 
+    x = np.linspace(0, L, mx + 1)
+    t = np.linspace(0, T, mt + 1)  # mesh points in time
+    xx = np.linspace(0, L, 250)
+
+    # pl.plot(x, u_FE, 'ro', label='FE')
+    # pl.plot(x, u_BE, 'bo', label='BE')
+    # pl.plot(x, u_CN, 'ko', label='CN')
+    # pl.plot(xx, u_exact(xx, T), label='Exact')
+    # pl.legend()
+    # pl.show()
+
+    mx = 15
+
+    x1 = np.linspace(0, L, mx + 1)
+    t = np.linspace(0, T, mt + 1)  # mesh points in time
+    xx = np.linspace(0, L, 250)
+
+    g_FE = solve_pde(mx, mt, 'FE', 'dirichlet', p, q, args)
+    g_BE = solve_pde(mx, mt, 'BE', 'dirichlet', p, q, args)
+    g_CN = solve_pde(mx, mt, 'CN', 'dirichlet', p, q, args)
+
+    fig, (ax1, ax2) = pl.subplots(1, 2, sharey=True)
+    ax1.plot(x, u_FE, 'ro', label='FE')
+    ax1.plot(x, u_BE, 'bo', label='BE')
+    ax1.plot(x, u_CN, 'ko', label='CN')
+    ax1.plot(xx, u_exact(xx, T), label='Exact')
+    ax1.set_title('lambda = 0.44')
+    ax1.legend()
+    ax2.plot(x1, g_FE, 'ro', label='FE')
+    ax2.plot(x1, g_BE, 'bo', label='BE')
+    ax2.plot(x1, g_CN, 'ko', label='CN')
+    ax2.plot(xx, u_exact(xx, T), label='Exact')
+    ax2.set_title('lambda = 0.16')
+    ax2.legend()
+    pl.show()
     # cn - weird results for periodic
     # be - weird for periodic and neumann
 
