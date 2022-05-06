@@ -9,14 +9,37 @@ warnings.filterwarnings('ignore', category=ssp.SparseEfficiencyWarning)
 
 
 def p(t):
+    """
+    LHS boundary condition
+    :param t: time value
+    :return: boundary condition at t
+    """
     return 0
 
 
 def q(t):
-    return 0
+    """
+    RHS boundary condition
+    :param t: time value
+    :return: boundary condition at t
+    """
+    return 1
 
 
 def forward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
+    """
+    Function to perform finite differences using forward euler method
+    :param u_j: initial conditions
+    :param lmbda: lambda value
+    :param bc: boundary conditions - dirichlet, neumann, periodic or homogenous
+    :param p: LHS boundary condition
+    :param q: RHS boundary condition
+    :param deltax: change in x
+    :param mx: number of x values to solve for
+    :param mt: number of intervals between t=0 and T
+    :param t: linspace for t
+    :return: conditions at t=T
+    """
 
     if bc == 'dirichlet':
 
@@ -125,6 +148,19 @@ def forward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
 
 
 def backward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
+    """
+    Function to perform finite differences using backward euler method
+    :param u_j: initial conditions
+    :param lmbda: lambda value
+    :param bc: boundary conditions - dirichlet, neumann, periodic or homogenous
+    :param p: LHS boundary condition
+    :param q: RHS boundary condition
+    :param deltax: change in x
+    :param mx: number of x values to solve for
+    :param mt: number of intervals between t=0 and T
+    :param t: linspace for t
+    :return: conditions at t=T
+    """
 
     if bc == 'dirichlet':
 
@@ -192,6 +228,19 @@ def backward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
 
 
 def crank_nicholson(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
+    """
+    Function to perform finite differences using crank-nicholson method
+    :param u_j: initial conditions
+    :param lmbda: lambda value
+    :param bc: boundary conditions - dirichlet, neumann, periodic or homogenous
+    :param p: LHS boundary condition
+    :param q: RHS boundary condition
+    :param deltax: change in x
+    :param mx: number of x values to solve for
+    :param mt: number of intervals between t=0 and T
+    :param t: linspace for t
+    :return: conditions at t=T
+    """
 
     if bc == 'dirichlet':
 
@@ -388,8 +437,8 @@ if __name__ == '__main__':
 
     # Set problem parameters/functions
     kappa = 1.0  # diffusion constant
-    L = 1.0  # length of spatial domain
-    T = 0.7  # total time to solve for
+    L = 2.0  # length of spatial domain
+    T = 0.5  # total time to solve for
 
     args = [1, 1, 0.7]
 
@@ -397,13 +446,18 @@ if __name__ == '__main__':
     mx = 25  # number of gridpoints in space
     mt = 1000  # number of gridpoints in time
 
-    u_FE = solve_pde(mx, mt, 'FE', 'dirichlet', p, q, args)
-    u_BE = solve_pde(mx, mt, 'BE', 'dirichlet', p, q, args)
-    u_CN = solve_pde(mx, mt, 'CN', 'dirichlet', p, q, args)
-
+    uf = solve_pde(mx, mt, 'CN', 'neumann', p, q, args)
     x = np.linspace(0, L, mx + 1)
-    t = np.linspace(0, T, mt + 1)  # mesh points in time
-    xx = np.linspace(0, L, 250)
+    pl.plot(x, uf, 'ro')
+    pl.show()
+
+    # u_FE = solve_pde(mx, mt, 'FE', 'dirichlet', p, q, args)
+    # u_BE = solve_pde(mx, mt, 'BE', 'dirichlet', p, q, args)
+    # u_CN = solve_pde(mx, mt, 'CN', 'dirichlet', p, q, args)
+    #
+    # x = np.linspace(0, L, mx + 1)
+    # t = np.linspace(0, T, mt + 1)  # mesh points in time
+    # xx = np.linspace(0, L, 250)
 
     # pl.plot(x, u_FE, 'ro', label='FE')
     # pl.plot(x, u_BE, 'bo', label='BE')
@@ -412,30 +466,30 @@ if __name__ == '__main__':
     # pl.legend()
     # pl.show()
 
-    mx = 15
-
-    x1 = np.linspace(0, L, mx + 1)
-    t = np.linspace(0, T, mt + 1)  # mesh points in time
-    xx = np.linspace(0, L, 250)
-
-    g_FE = solve_pde(mx, mt, 'FE', 'dirichlet', p, q, args)
-    g_BE = solve_pde(mx, mt, 'BE', 'dirichlet', p, q, args)
-    g_CN = solve_pde(mx, mt, 'CN', 'dirichlet', p, q, args)
-
-    fig, (ax1, ax2) = pl.subplots(1, 2, sharey=True)
-    ax1.plot(x, u_FE, 'ro', label='FE')
-    ax1.plot(x, u_BE, 'bo', label='BE')
-    ax1.plot(x, u_CN, 'ko', label='CN')
-    ax1.plot(xx, u_exact(xx, T), label='Exact')
-    ax1.set_title('lambda = 0.44')
-    ax1.legend()
-    ax2.plot(x1, g_FE, 'ro', label='FE')
-    ax2.plot(x1, g_BE, 'bo', label='BE')
-    ax2.plot(x1, g_CN, 'ko', label='CN')
-    ax2.plot(xx, u_exact(xx, T), label='Exact')
-    ax2.set_title('lambda = 0.16')
-    ax2.legend()
-    pl.show()
+    # mx = 15
+    #
+    # x1 = np.linspace(0, L, mx + 1)
+    # t = np.linspace(0, T, mt + 1)  # mesh points in time
+    # xx = np.linspace(0, L, 250)
+    #
+    # g_FE = solve_pde(mx, mt, 'FE', 'dirichlet', p, q, args)
+    # g_BE = solve_pde(mx, mt, 'BE', 'dirichlet', p, q, args)
+    # g_CN = solve_pde(mx, mt, 'CN', 'dirichlet', p, q, args)
+    #
+    # fig, (ax1, ax2) = pl.subplots(1, 2, sharey=True)
+    # ax1.plot(x, u_FE, 'ro', label='FE')
+    # ax1.plot(x, u_BE, 'bo', label='BE')
+    # ax1.plot(x, u_CN, 'ko', label='CN')
+    # ax1.plot(xx, u_exact(xx, T), label='Exact')
+    # ax1.set_title('lambda = 0.44')
+    # ax1.legend()
+    # ax2.plot(x1, g_FE, 'ro', label='FE')
+    # ax2.plot(x1, g_BE, 'bo', label='BE')
+    # ax2.plot(x1, g_CN, 'ko', label='CN')
+    # ax2.plot(xx, u_exact(xx, T), label='Exact')
+    # ax2.set_title('lambda = 0.16')
+    # ax2.legend()
+    # pl.show()
     # cn - weird results for periodic
     # be - weird for periodic and neumann
 

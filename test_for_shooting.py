@@ -23,6 +23,12 @@ def hopf(U0, t, args):
 
 
 def true_sol(t, args):
+    """
+    Function returning true hopf solution at t
+    :param t: time value
+    :param args: beta and theta values
+    :return: hopf solution at t
+    """
 
     beta = args[0]
     theta = args[1]
@@ -34,6 +40,12 @@ def true_sol(t, args):
 
 
 def true_sol_3(t, args):
+    """
+    Function returning true solution for 3 dimensional hopf equation at t
+    :param t: time value
+    :param args: beta and theta values
+    :return: true solution for 3 dimensional hopf equation at t
+    """
 
     beta = args[0]
     theta = args[1]
@@ -46,9 +58,13 @@ def true_sol_3(t, args):
 
 
 def hopf_3(U0, t, args):
-
-    # beta = 1
-    # sigma = -1
+    """
+    Function for 3 dimensional hopf equatiom
+    :param U0: initial conditions
+    :param t: time value
+    :param args: beta and sigma values
+    :return: values of dudt for all u values
+    """
     beta = args[0]
     sigma = args[1]
 

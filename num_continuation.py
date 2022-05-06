@@ -57,12 +57,12 @@ def hopfm(U0, t, args):
     return [du1dt, du2dt]
 
 
-def nat_continuation(f, U0, par_min, par_max, par_split, discretisation, solver=fsolve):
+def nat_continuation(ode, U0, par_min, par_max, par_split, discretisation, solver=fsolve):
     """
     Performs natural parameter continuation on chosen set of ODEs returning parameter list and corresponding solution
     for each parameter value
 
-    :param f: System of ODEs to solve
+    :param ode: System of ODEs to solve
     :param U0: Initial conditions
     :param par_min: Starting parameter value
     :param par_max: End parameter value
@@ -83,7 +83,7 @@ def nat_continuation(f, U0, par_min, par_max, par_split, discretisation, solver=
         rou = 4
 
     for par in params:
-        U0 = solver(discretisation(f), U0, par)
+        U0 = solver(discretisation(ode), U0, par)
         U0 = np.round(U0, rou)
         solut_list = solut_list + [U0]
 
@@ -91,6 +91,19 @@ def nat_continuation(f, U0, par_min, par_max, par_split, discretisation, solver=
 
 
 def psuedo_continuation(ode, U0, par_min, par_max, par_split, discretisation, solver=fsolve):
+    """
+    Performs pseudo-arclength continuation on chosen set of ODEs returning parameter list and
+    corresponding solution for each parameter value
+
+    :param ode: System of ODEs to solve
+    :param U0: Initial conditions
+    :param par_min: Starting parameter value
+    :param par_max: End parameter value
+    :param par_split: Number of intervals between parameter range
+    :param discretisation: Discretisation to use
+    :param solver: Type of solver to use. (only implemented fsolve and cont_pde for pdes)
+    :return: List of parameters and solutions at each parameter value
+    """
 
     if discretisation==shooting:
         R0 = list(U0)
@@ -131,8 +144,6 @@ def psuedo_continuation(ode, U0, par_min, par_max, par_split, discretisation, so
 
         pred_ar = np.array(pred_ar)
 
-        # psuedo_arc = np.dot(sol_lis[i+1] - pred_x, delta_x) + np.dot(param_l[i+1] - pred_p, delta_p)
-
         sol = solver(lambda cur_s: np.append(discretisation(ode)(cur_s[:-1], p_upd(cur_s[-1])),
                                                     np.dot(cur_s[:-1] - pred_x, delta_x) + np.dot(cur_s[-1] - pred_p,
                                                                                                   delta_p)), pred_ar)
@@ -144,28 +155,31 @@ def psuedo_continuation(ode, U0, par_min, par_max, par_split, discretisation, so
 
         i += 1
 
-    # solution
-
-    # solutions = solutions + [sol]
-    # pars = pars + [par]
-    #
-    # val1 = sol
-    # val0 = val1
-
     return sol_lis, param_l
 
 
 if __name__ == '__main__':
 
-    # cubic initial conditions
-    U0 = 1.6
-    pmin = -2
-    pmax = 2
-    pstep = 100
-
+    # # cubic initial conditions
+    # U0 = 1
+    # pmin = -2
+    # pmax = 2
+    # pstep = 100
+    #
     # par_list, solutions = nat_continuation(cubic_eq, U0, pmin, pmax, pstep, discretisation=lambda x: x)
     # plt.plot(par_list, solutions, label='natural parameter')
+    #
+    # U0 = 1
+    # pmin = -2
+    # pmax = 2
+    # pstep = 100
+    #
+    # sol_l, p_l = psuedo_continuation(cubic_eq, U0, pmin, pmax, pstep, discretisation=lambda x: x)
+    # plt.plot(p_l, sol_l, label='pseudo-arclength')
+    # plt.legend()
     # plt.show()
+
+    # hopf continuation - natural works but could not get pseudo arclength to work
 
     U0 = 1.4, 0, 6.3
     pmin = 2
@@ -180,9 +194,9 @@ if __name__ == '__main__':
     pmax = -1
     pstep = 34
 
-    # par_list, solutions = nat_continuation(hopfm, U0, pmin, pmax, pstep, shooting)
-    # plt.plot(par_list, solutions)
-    # plt.show()
+    par_list, solutions = nat_continuation(hopfm, U0, pmin, pmax, pstep, shooting)
+    plt.plot(par_list, solutions)
+    plt.show()
 
     # U0 = 1.4, 0, 6.3
     # params = [2, -1]
@@ -191,18 +205,6 @@ if __name__ == '__main__':
     # pstep = 0.1
     #
     # par_list, solutions = nat_continuation_h(hopf, U0, params, pmin, pmax, pstep, 0, shooting)
-
-    U0 = 1
-    pmin = -2
-    pmax = 2
-    pstep = 100
-
-    sol_l, p_l = psuedo_continuation(cubic_eq, U0, pmin, pmax, pstep, discretisation=lambda x: x)
-    plt.plot(p_l, sol_l, label='pseudo-arclength')
-    plt.legend()
-    plt.show()
-    # plt.plot(par_list, solutions)
-    plt.show()
 
     U0 = 1.4, 0, 6.3
     pmin = -1

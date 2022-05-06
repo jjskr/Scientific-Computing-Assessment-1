@@ -6,49 +6,6 @@ from scipy.optimize import fsolve
 from scipy.integrate import solve_ivp
 
 
-def pp_eqs(U0, t, args):
-    """
-    A function that returns the values of the given predator prey functions at (U0, t)
-    :param U0: values for x and y
-    :param t: time
-    :param args: list of a, b and d constants
-    :return: solutions to predator prey equations
-    """
-
-    x, y = U0
-
-    a = args[0]
-    b = args[1]
-    d = args[2]
-
-    dxdt = x*(1-x) - a*x*y/(d+x)
-    dydt = b*y*(1-(y/x))
-
-    return [dxdt, dydt]
-
-
-def hopf(U0, t, args):
-    """
-    A function that returns solutions to the hopf equations at (U0, t)
-    :param U0: values for x and y
-    :param t: time
-    :param args: list of beta and sigma constants
-    :return: solutions to hopf equations
-    """
-
-    beta = args[0]
-    sigma = args[1]
-    u1, u2 = U0
-    du1dt = beta * u1 - u2 + sigma * u1 * (u1**2 + u2**2)
-    du2dt = u1 + beta * u2 + sigma * u2 * (u1**2 + u2**2)
-
-    return [du1dt, du2dt]
-
-
-def pc_hopf(U0, T,  ode, *args):
-    return ode(U0, T, args)[0]
-
-
 def shooting(ode):
     """
     Uses chosen ODE to set function to solve to find orbit cycle of 2D and 3D systems of ODEs
@@ -84,35 +41,93 @@ def orbit(ode, U0, *args):
     return sol
 
 
-def shooting_plots(U0, ode, *args):
-
-    sol = orbit(ode, U0, args)
-    X0, T = sol[:-1], sol[-1]
-    sol_mine = solve_ode(X0, 0, T, ode, 'runge', 0.01, *args)
-    plt.plot(sol_mine[:, 0], sol_mine[:, 1])
-    plt.show()
-
-
-def shooting_one_cycle(U0, ode, *args):
-
-    sol = orbit(ode, U0, args)
-    X0, T = sol[:-1], sol[-1]
-    sol_mine = solve_ode(X0, 0, T, ode, 'runge', 0.01, *args)
-    time_cycle = math.ceil(float(T)/0.01) + 1
-    t = np.linspace(0, T, time_cycle)
-    plt.plot(t, sol_mine)
-    plt.xlabel('Time (s)')
-    plt.legend(['x', 'y'])
-    plt.show()
-
-
 if __name__ == '__main__':
+
+    def pp_eqs(U0, t, args):
+        """
+        A function that returns the values of the given predator prey functions at (U0, t)
+        :param U0: values for x and y
+        :param t: time
+        :param args: list of a, b and d constants
+        :return: solutions to predator prey equations
+        """
+
+        x, y = U0
+
+        a = args[0]
+        b = args[1]
+        d = args[2]
+
+        dxdt = x * (1 - x) - a * x * y / (d + x)
+        dydt = b * y * (1 - (y / x))
+
+        return [dxdt, dydt]
+
+
+    def hopf(U0, t, args):
+        """
+        A function that returns solutions to the hopf equations at (U0, t)
+        :param U0: values for x and y
+        :param t: time
+        :param args: list of beta and sigma constants
+        :return: solutions to hopf equations
+        """
+
+        beta = args[0]
+        sigma = args[1]
+        u1, u2 = U0
+        du1dt = beta * u1 - u2 + sigma * u1 * (u1 ** 2 + u2 ** 2)
+        du2dt = u1 + beta * u2 + sigma * u2 * (u1 ** 2 + u2 ** 2)
+
+        return [du1dt, du2dt]
+
+
+    def pc_hopf(U0, T, ode, *args):
+        return ode(U0, T, args)[0]
+
+
+    def shooting_plots(U0, ode, *args):
+        """
+        Function to plot orbit shooting solutions
+        :param U0: initial conditions
+        :param ode: ODE(s) to solve for
+        :param args: additional arguments for function
+        :return: plots of orbit birufication
+        """
+
+        sol = orbit(ode, U0, args)
+        X0, T = sol[:-1], sol[-1]
+        sol_mine = solve_ode(X0, 0, T, ode, 'runge', 0.01, *args)
+        plt.plot(sol_mine[:, 0], sol_mine[:, 1])
+        plt.show()
+
+
+    def shooting_one_cycle(U0, ode, *args):
+        """
+        Function returning plots of x and y against time
+        :param U0: initial conditions
+        :param ode: ODE(s) to solve for
+        :param args: additional arguments to pass onto function
+        :return: plots of cycle vs time
+        """
+
+        sol = orbit(ode, U0, args)
+        X0, T = sol[:-1], sol[-1]
+        sol_mine = solve_ode(X0, 0, T, ode, 'runge', 0.01, *args)
+        time_cycle = math.ceil(float(T) / 0.01) + 1
+        t = np.linspace(0, T, time_cycle)
+        plt.plot(t, sol_mine)
+        plt.xlabel('Time (s)')
+        plt.legend(['x', 'y'])
+        plt.show()
+
 
     # # initial guess predator-prey
     X0 = 0.2, 0.3
     T = 21
     U0 = 0.2, 0.3, 21
-    args = [1, 0.26, 0.1]
+    # U0 = 100, 100, -100
+    args = [1, 0.16, 0.1]
     ode = pp_eqs
 
     # initial guess hopf
