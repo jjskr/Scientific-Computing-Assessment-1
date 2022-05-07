@@ -16,9 +16,15 @@ def shooting(ode):
     def conditions(U0, *args):
 
         X0, T = U0[:-1], U0[-1]
+
+        pc = args[0]
+        args = args[1:]
+
         sols = solve_ode(X0, 0, T, ode, 'runge', 0.01, *args)
         sol = sols[-1, :]
-        phase_cond = ode(X0, 0, *args)[0]
+        # print(X0)
+        phase_cond = pc(X0, T, ode, *args)
+        # phase_cond = ode(U0, 0, args)[0]
         period_cond = [X0[0] - sol[0], X0[1] - sol[1]]
 
         if len(sol) == 3:
@@ -29,7 +35,7 @@ def shooting(ode):
     return conditions
 
 
-def orbit(ode, U0, *args):
+def orbit(ode, U0, pc, *args):
     """
     Calculates solution to shooting(ode) using fsolve
     :param ode: System of odes to solve for
@@ -37,7 +43,7 @@ def orbit(ode, U0, *args):
     :param args: Arguments needed by system of odes
     :return: Solution of initial conditions and time period of one orbit in the form of an array
     """
-    sol = fsolve(shooting(ode), U0, *args)
+    sol = fsolve(shooting(ode), U0, args=(pc, *args))
     return sol
 
 
@@ -72,7 +78,7 @@ if __name__ == '__main__':
         :param args: list of beta and sigma constants
         :return: solutions to hopf equations
         """
-
+        # print(U0, t)
         beta = args[0]
         sigma = args[1]
         u1, u2 = U0
@@ -82,8 +88,8 @@ if __name__ == '__main__':
         return [du1dt, du2dt]
 
 
-    def pc_hopf(U0, T, ode, *args):
-        return ode(U0, T, args)[0]
+    def pc_stable_0(U0, T, ode, args):
+        return ode(U0, 0, args)[0]
 
 
     def shooting_plots(U0, ode, *args):
@@ -127,20 +133,22 @@ if __name__ == '__main__':
     T = 21
     U0 = 0.2, 0.3, 21
     # U0 = 100, 100, -100
-    args = [1, 0.16, 0.1]
+    args = [1, 0.26, 0.1]
     ode = pp_eqs
+    pc = pc_stable_0
 
     # initial guess hopf
-    method = 'runge'
+    # method = 'runge'
     # ode = hopf
     # args = [1, -1]
     # U0 = 1.5, 1.5, 5
     # X0 = 1.5, 1.5
     # T = 5
+    # pc = pc_hopf
 
     deltat_max = 0.01
 
-    orb = orbit(ode, U0, args)
+    orb = orbit(ode, U0, pc, args)
     print(orb)
 
     # X0 = 1.6, 1.2

@@ -7,6 +7,10 @@ from pde_solving import solve_pde
 from math import pi
 
 
+def pc_stable_0(U0, T, ode, args):
+    return ode(U0, 0, args)[0]
+
+
 def hopf(U0, t, args):
     """
     A function that returns solutions to the hopf equations at (U0, t)
@@ -57,7 +61,7 @@ def hopfm(U0, t, args):
     return [du1dt, du2dt]
 
 
-def nat_continuation(ode, U0, par_min, par_max, par_split, discretisation, solver=fsolve):
+def nat_continuation(ode, U0, par_min, par_max, par_split, pc, discretisation, solver=fsolve):
     """
     Performs natural parameter continuation on chosen set of ODEs returning parameter list and corresponding solution
     for each parameter value
@@ -83,7 +87,11 @@ def nat_continuation(ode, U0, par_min, par_max, par_split, discretisation, solve
         rou = 4
 
     for par in params:
-        U0 = solver(discretisation(ode), U0, par)
+        if pc:
+            args = (pc, par)
+        else:
+            args = par
+        U0 = solver(discretisation(ode), U0, args)
         U0 = np.round(U0, rou)
         solut_list = solut_list + [U0]
 
@@ -166,9 +174,9 @@ if __name__ == '__main__':
     # pmax = 2
     # pstep = 100
     #
-    # par_list, solutions = nat_continuation(cubic_eq, U0, pmin, pmax, pstep, discretisation=lambda x: x)
+    # par_list, solutions = nat_continuation(cubic_eq, U0, pmin, pmax, pstep, None, discretisation=lambda x: x)
     # plt.plot(par_list, solutions, label='natural parameter')
-    #
+    # #
     # U0 = 1
     # pmin = -2
     # pmax = 2
@@ -186,17 +194,17 @@ if __name__ == '__main__':
     pmax = 0
     pstep = 50
 
-    # par_list, solutions = nat_continuation(hopfn, U0, pmin, pmax, pstep, shooting)
-    # plt.plot(par_list, solutions)
-    # plt.show()
+    par_list, solutions = nat_continuation(hopfn, U0, pmin, pmax, pstep, pc_stable_0, shooting)
+    plt.plot(par_list, solutions)
+    plt.show()
 
     pmin = 2
     pmax = -1
     pstep = 34
 
-    par_list, solutions = nat_continuation(hopfm, U0, pmin, pmax, pstep, shooting)
-    plt.plot(par_list, solutions)
-    plt.show()
+    # par_list, solutions = nat_continuation(hopfm, U0, pmin, pmax, pstep, pc_stable_0, shooting)
+    # plt.plot(par_list, solutions)
+    # plt.show()
 
     # U0 = 1.4, 0, 6.3
     # params = [2, -1]
