@@ -84,7 +84,7 @@ def nat_continuation(ode, U0, par_min, par_max, par_split, pc, discretisation, s
         rou = 10
         solver = cont_pde
     else:
-        rou = 4
+        rou = 5
 
     for par in params:
         if pc:
@@ -94,7 +94,6 @@ def nat_continuation(ode, U0, par_min, par_max, par_split, pc, discretisation, s
         U0 = solver(discretisation(ode), U0, args)
         U0 = np.round(U0, rou)
         solut_list = solut_list + [U0]
-
     return params, solut_list
 
 
@@ -174,7 +173,7 @@ if __name__ == '__main__':
     # pmax = 2
     # pstep = 100
     #
-    # par_list, solutions = nat_continuation(cubic_eq, U0, pmin, pmax, pstep, None, discretisation=lambda x: x)
+    # par_list, solutions = nat_continuation(cubic_eq, U0, pmin, pmax, pstep, None, lambda x: x)
     # plt.plot(par_list, solutions, label='natural parameter')
     # #
     # U0 = 1
@@ -182,7 +181,7 @@ if __name__ == '__main__':
     # pmax = 2
     # pstep = 100
     #
-    # sol_l, p_l = psuedo_continuation(cubic_eq, U0, pmin, pmax, pstep, discretisation=lambda x: x)
+    # sol_l, p_l = psuedo_continuation(cubic_eq, U0, pmin, pmax, pstep, lambda x: x)
     # plt.plot(p_l, sol_l, label='pseudo-arclength')
     # plt.legend()
     # plt.show()
@@ -194,9 +193,9 @@ if __name__ == '__main__':
     pmax = 0
     pstep = 50
 
-    par_list, solutions = nat_continuation(hopfn, U0, pmin, pmax, pstep, pc_stable_0, shooting)
-    plt.plot(par_list, solutions)
-    plt.show()
+    # par_list, solutions = nat_continuation(hopfn, U0, pmin, pmax, pstep, pc_stable_0, shooting)
+    # plt.plot(par_list, solutions)
+    # plt.show()
 
     pmin = 2
     pmax = -1
@@ -259,7 +258,7 @@ if __name__ == '__main__':
         return f(U0, args)
 
 
-    # param, sols = nat_continuation(pdef, np.zeros(mx+1), 0.5, 2, 11, lambda x: x, 'cont_pde')
+    # param, sols = nat_continuation(pdef, np.zeros(mx+1), 0.5, 2, 11, None, lambda x: x, 'cont_pde')
     # print(sols[-1], 'solutions')
     # t = np.linspace(0, T, mx + 1)  # mesh points in time
     #

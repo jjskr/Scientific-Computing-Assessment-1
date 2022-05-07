@@ -19,7 +19,6 @@ def shooting(ode):
 
         pc = args[0]
         args = args[1:]
-
         sols = solve_ode(X0, 0, T, ode, 'runge', 0.01, *args)
         sol = sols[-1, :]
         # print(X0)
@@ -92,7 +91,7 @@ if __name__ == '__main__':
         return ode(U0, 0, args)[0]
 
 
-    def shooting_plots(U0, ode, *args):
+    def shooting_plots(U0, ode, pc, args):
         """
         Function to plot orbit shooting solutions
         :param U0: initial conditions
@@ -101,14 +100,14 @@ if __name__ == '__main__':
         :return: plots of orbit birufication
         """
 
-        sol = orbit(ode, U0, args)
+        sol = orbit(ode, U0, pc, args)
         X0, T = sol[:-1], sol[-1]
-        sol_mine = solve_ode(X0, 0, T, ode, 'runge', 0.01, *args)
+        sol_mine = solve_ode(X0, 0, T, ode, 'runge', 0.01, args)
         plt.plot(sol_mine[:, 0], sol_mine[:, 1])
         plt.show()
 
 
-    def shooting_one_cycle(U0, ode, *args):
+    def shooting_one_cycle(U0, ode, pc, args):
         """
         Function returning plots of x and y against time
         :param U0: initial conditions
@@ -117,9 +116,9 @@ if __name__ == '__main__':
         :return: plots of cycle vs time
         """
 
-        sol = orbit(ode, U0, args)
+        sol = orbit(ode, U0, pc, args)
         X0, T = sol[:-1], sol[-1]
-        sol_mine = solve_ode(X0, 0, T, ode, 'runge', 0.01, *args)
+        sol_mine = solve_ode(X0, 0, T, ode, 'runge', 0.01, args)
         time_cycle = math.ceil(float(T) / 0.01) + 1
         t = np.linspace(0, T, time_cycle)
         plt.plot(t, sol_mine)
@@ -147,15 +146,15 @@ if __name__ == '__main__':
     # pc = pc_hopf
 
     deltat_max = 0.01
-
+    #
     orb = orbit(ode, U0, pc, args)
-    print(orb)
+    # print(orb)
 
     # X0 = 1.6, 1.2
     # # initial guess hopf 3 odes
     # X0 = 1, 1, 1
     # T = 8
 
-    # shooting_plots(U0, ode, args)
-    # shooting_one_cycle(U0, ode, args)
+    # shooting_plots(U0, ode, pc_stable_0, args)
+    # shooting_one_cycle(U0, ode, pc_stable_0, args)
     # test_hopf_solutions(X0, T, ode, method, deltat_max, *args)

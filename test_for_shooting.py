@@ -4,6 +4,10 @@ from num_shooting import shooting
 from num_shooting import orbit
 
 
+def pc_stable_0(U0, T, ode, args):
+    return ode(U0, 0, args)[0]
+
+
 def hopf(U0, t, args):
     """
     A function that returns solutions to the hopf equations at (U0, t)
@@ -91,7 +95,7 @@ def test_shooting_solutions(U0, ode, f_true_sol, args):
     test_status = 0
 
     # hopf_sol = shooting(X0, T, ode, method, deltat_max, args)
-    orb_sol = orbit(ode, U0, args)
+    orb_sol = orbit(ode, U0, pc_stable_0, args)
 
     X0, T = orb_sol[:-1], orb_sol[-1]
 
