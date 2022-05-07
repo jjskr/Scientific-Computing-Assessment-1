@@ -247,9 +247,10 @@ if __name__ == '__main__':
 
 
     def pdef(U0, arg):
+        print(U0)
 
         args = [arg, 1, 0.5]
-        u_j = solve_pde(mx, mt, 'CN', 'dirichlet', p, q, args)
+        u_j = solve_pde(U0, mx, mt, 'CN', 'dirichlet', p, q, args)
 
         return u_j
 
