@@ -8,6 +8,14 @@ from math import pi
 
 
 def pc_stable_0(U0, T, ode, args):
+    """
+    Phase condition for hopf
+    :param U0: current conditions
+    :param T: current time
+    :param ode: system of equations to solve
+    :param args: additional arguments to pass to function
+    :return: result of first equation in system of odes for U0
+    """
     return ode(U0, 0, args)[0]
 
 
@@ -117,6 +125,11 @@ def psuedo_continuation(ode, U0, par_min, par_max, par_split, discretisation, so
         R0 = R0[:-1]
 
     def p_upd(pred):
+        """
+        Function to update parameter in pseudo arclength equation
+        :param pred: next prediction
+        :return: par updated as prediction
+        """
 
         par = pred
 
@@ -239,11 +252,11 @@ if __name__ == '__main__':
 
 
     def p(t):
-        return 3
+        return 0
 
 
     def q(t):
-        return 4
+        return 0
 
 
     def pdef(U0, arg):
@@ -259,7 +272,7 @@ if __name__ == '__main__':
         return f(U0, args)
 
 
-    param, sols = nat_continuation(pdef, np.zeros(mx+1), 0.5, 2, 11, None, lambda x: x, 'cont_pde')
+    param, sols = nat_continuation(pdef, np.ones(mx+1), 0, 0.5, 11, None, lambda x: x, 'cont_pde')
     t = np.linspace(0, T, mx + 1)  # mesh points in time
 
     j = 0
