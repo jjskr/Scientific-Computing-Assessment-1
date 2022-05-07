@@ -5,7 +5,6 @@ from solve_odes import solve_ode
 from solve_odes import solve_to
 from solve_odes import euler_step
 from solve_odes import runge_kutta
-from num_shooting import hopf
 from num_shooting import orbit
 from num_shooting import shooting
 from scipy.optimize import fsolve
@@ -23,6 +22,7 @@ def test_input_solve_ode(x0, t0, t1, eqs, method, deltat_max, *args):
     :param args: additional arguments needed by ODE(s)
     :return: nothing if tests pass, message if a test fails
     """
+
     if isinstance(x0, tuple) or isinstance(x0, int):
         print('starting co-ordinate(s) suitable type')
     else:
@@ -42,8 +42,12 @@ def test_input_solve_ode(x0, t0, t1, eqs, method, deltat_max, *args):
         return
     try:
         is_fun = str(eqs)[1]
+        print(str(eqs))
         if is_fun == 'f':
             print('system of odes suitable')
+        else:
+            print('system of odes not suitable')
+            return
     except IndexError:
         print('system of odes not suitable')
         return
@@ -83,24 +87,6 @@ def test_input_solve_ode(x0, t0, t1, eqs, method, deltat_max, *args):
     except ValueError:
         print('delta t not suitable')
         return
-
-
-t0 = 0
-t1 = 10
-x0 = 1, 0
-deltat_maxx = 0.1
-method = 'runge'
-eqs = f2
-# test_input_solve_ode(x0, t0, t1, eqs, method, deltat_maxx)
-
-
-method = 'runge'
-eqs = hopf
-# args = [1, -1]
-x0 = 1.5, 1.5
-t0 = 5
-deltat_max = 0.01
-# test_input_solve_ode(x0, t0, t1, eqs, method, deltat_maxx, args)
 
 
 def test_input_orbit_shooting(ode, U0, *args):
@@ -156,8 +142,46 @@ def test_input_orbit_shooting(ode, U0, *args):
     print(sol)
 
 
-U0 = 1.5, 1.5, 5
-# U0 = 1.5, 1.5
-args = [1, -1]
-# args = [1]
-test_input_orbit_shooting(hopf, U0, args)
+if __name__ == '__main__':
+
+    def hopf(U0, t, args):
+        """
+        A function that returns solutions to the hopf equations at (U0, t)
+        :param U0: values for x and y
+        :param t: time
+        :param args: list of beta and sigma constants
+        :return: solutions to hopf equations
+        """
+        # print(U0, t)
+        beta = args[0]
+        sigma = args[1]
+        u1, u2 = U0
+        du1dt = beta * u1 - u2 + sigma * u1 * (u1 ** 2 + u2 ** 2)
+        du2dt = u1 + beta * u2 + sigma * u2 * (u1 ** 2 + u2 ** 2)
+
+        return [du1dt, du2dt]
+
+
+    t0 = 0
+    t1 = 10
+    x0 = 1, 0
+    deltat_maxx = 0.1
+    method = 'runge'
+    eqs = f
+    test_input_solve_ode(x0, t0, t1, eqs, method, deltat_maxx)
+
+
+    method = 'runge'
+    eqs = hopf
+    # args = [1, -1]
+    x0 = 1.5, 1.5
+    t0 = 5
+    deltat_max = 0.01
+    # test_input_solve_ode(x0, t0, t1, eqs, method, deltat_maxx, args)
+
+
+    U0 = 1.5, 1.5, 5
+    # U0 = 1.5, 1.5
+    args = [1, -1]
+    # args = [1]
+    # test_input_orbit_shooting(hopf, U0, args)
