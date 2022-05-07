@@ -180,51 +180,7 @@ def psuedo_continuation(ode, U0, par_min, par_max, par_split, discretisation, so
 
 if __name__ == '__main__':
 
-    # # cubic initial conditions
-    # U0 = 1
-    # pmin = -2
-    # pmax = 2
-    # pstep = 100
-    #
-    # par_list, solutions = nat_continuation(cubic_eq, U0, pmin, pmax, pstep, None, lambda x: x)
-    # plt.plot(par_list, solutions, label='natural parameter')
-    # #
-    # U0 = 1
-    # pmin = -2
-    # pmax = 2
-    # pstep = 100
-    #
-    # sol_l, p_l = psuedo_continuation(cubic_eq, U0, pmin, pmax, pstep, lambda x: x)
-    # plt.plot(p_l, sol_l, label='pseudo-arclength')
-    # plt.legend()
-    # plt.show()
-
-    # hopf continuation - natural works but could not get pseudo arclength to work
-
-    U0 = 1.4, 0, 6.3
-    pmin = 2
-    pmax = 0
-    pstep = 50
-
-    # par_list, solutions = nat_continuation(hopfn, U0, pmin, pmax, pstep, pc_stable_0, shooting)
-    # plt.plot(par_list, solutions)
-    # plt.show()
-
-    pmin = 2
-    pmax = -1
-    pstep = 34
-
-    # par_list, solutions = nat_continuation(hopfm, U0, pmin, pmax, pstep, pc_stable_0, shooting)
-    # plt.plot(par_list, solutions)
-    # plt.show()
-
-    # U0 = 1.4, 0, 6.3
-    # params = [2, -1]
-    # pmin = -1
-    # pmax = 2
-    # pstep = 0.1
-    #
-    # par_list, solutions = nat_continuation_h(hopf, U0, params, pmin, pmax, pstep, 0, shooting)
+    # experimenting
 
     U0 = 1.4, 0, 6.3
     pmin = -1
@@ -235,7 +191,49 @@ if __name__ == '__main__':
     # plt.plot(p_l, sol_l)
     # plt.show()
 
-    # Attempting pde continuation
+    # plotting natural continuation and pseudo arc length results for cubic
+    # as c varies between -2 and 2
+    # # cubic initial conditions
+    U0 = 1
+    pmin = -2
+    pmax = 2
+    pstep = 100
+
+    par_list, solutions = nat_continuation(cubic_eq, U0, pmin, pmax, pstep, None, lambda x: x)
+    plt.plot(par_list, solutions, label='natural parameter')
+    #
+    U0 = 1
+    pmin = -2
+    pmax = 2
+    pstep = 100
+
+    sol_l, p_l = psuedo_continuation(cubic_eq, U0, pmin, pmax, pstep, lambda x: x)
+    plt.plot(p_l, sol_l, label='pseudo-arclength')
+    plt.legend()
+    plt.show()
+
+    # hopf continuation - natural works but could not get pseudo arclength to work
+
+    U0 = 1.4, 0, 6.3
+    pmin = 2
+    pmax = 0
+    pstep = 50
+
+    par_list, solutions = nat_continuation(hopfn, U0, pmin, pmax, pstep, pc_stable_0, shooting)
+    plt.plot(par_list, solutions)
+    plt.show()
+
+    # modified hopf plots
+
+    pmin = 2
+    pmax = -1
+    pstep = 34
+
+    par_list, solutions = nat_continuation(hopfm, U0, pmin, pmax, pstep, pc_stable_0, shooting)
+    plt.plot(par_list, solutions)
+    plt.show()
+
+    # pde continuation, varying t between 0 and 0.5 with homogeneous boundaries
 
     kappa = 1.0  # diffusion constant
     L = 1.0  # length of spatial domain
@@ -260,10 +258,10 @@ if __name__ == '__main__':
 
 
     def pdef(U0, arg):
-        print(U0)
 
-        args = [arg, 1, 0.5]
-        u_j = solve_pde(U0, mx, mt, 'CN', 'dirichlet', p, q, args)
+        args = [1, 1, arg]
+        u_j = solve_pde(None, mx, mt, 'FE', 'dirichlet', p, q, args)
+
 
         return u_j
 

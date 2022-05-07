@@ -136,6 +136,45 @@ if __name__ == '__main__':
     ode = pp_eqs
     pc = pc_stable_0
 
+    # b > 0.26 - graph shows that function converges
+    args[1] = 0.3
+    sol_mine = solve_ode(X0, 0, 100, ode, 'runge', 0.01, args)
+    t_val = math.ceil(100/0.01) + 1
+    t = np.linspace(0, T, t_val)
+    plt.plot(t, sol_mine)
+    plt.show()
+
+    # b < 0.26 - graph shows that function diverges
+    args[1] = 0.16
+    sol_mine = solve_ode(X0, 0, 100, ode, 'runge', 0.01, args)
+    t_val = math.ceil(100/0.01) + 1
+    t = np.linspace(0, T, t_val)
+    plt.plot(t, sol_mine)
+    plt.show()
+
+    # finding orbit manually
+    # isolated by inspection - ran in great detail to ensure the period was found correctly
+    args = [1, 0.26, 0.1]
+    sol_mine = solve_ode(X0, 0, 100, ode, 'runge', 0.01, args)
+    t_val = math.ceil(100/0.01) + 1
+    t = np.linspace(0, 100, t_val)
+    plt.plot(t, sol_mine)
+    plt.show()
+    print('ok')
+
+    # plotting phase portrait
+    shooting_plots(U0, ode, pc, args)
+
+    # plotting orbit found by orbit function for predator prey equations
+    shooting_one_cycle(U0, ode, pc, args)
+    # orb = orbit(ode, U0, pc, args)
+    # sol_mine = solve_ode(orb[:-1], 0, orb[-1], ode, 'runge', 0.01, args)
+    # t_val = math.ceil(orb[-1]/0.01) + 1
+    # t = np.linspace(0, orb[-1], t_val)
+    # plt.plot(t, sol_mine)
+    # plt.show()
+
+
     # initial guess hopf
     # method = 'runge'
     # ode = hopf
@@ -147,7 +186,7 @@ if __name__ == '__main__':
 
     deltat_max = 0.01
     #
-    orb = orbit(ode, U0, pc, args)
+    # orb = orbit(ode, U0, pc, args)
     # print(orb)
 
     # X0 = 1.6, 1.2
