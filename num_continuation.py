@@ -243,7 +243,7 @@ if __name__ == '__main__':
 
 
     def q(t):
-        return 5
+        return 4
 
 
     def pdef(U0, arg):
@@ -258,17 +258,16 @@ if __name__ == '__main__':
         return f(U0, args)
 
 
-    # param, sols = nat_continuation(pdef, np.zeros(mx+1), 0.5, 2, 11, None, lambda x: x, 'cont_pde')
-    # print(sols[-1], 'solutions')
-    # t = np.linspace(0, T, mx + 1)  # mesh points in time
-    #
-    # j = 0
-    #
-    # for i in sols:
-    #     ka = np.round(param[j], 4)
-    #     ka = str(ka)
-    #     plt.plot(t, i, label='T = ' + ka)
-    #     plt.legend()
-    #     j += 1
-    # plt.show()
+    param, sols = nat_continuation(pdef, np.zeros(mx+1), 0.5, 2, 11, None, lambda x: x, 'cont_pde')
+    t = np.linspace(0, T, mx + 1)  # mesh points in time
+
+    j = 0
+
+    for i in sols:
+        ka = np.round(param[j], 4)
+        ka = str(ka)
+        plt.plot(t, i, label='T = ' + ka)
+        plt.legend()
+        j += 1
+    plt.show()
     # solve_pde(mx, mt, 'CN', 'dirichlet', p, q, 2)

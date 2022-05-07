@@ -92,8 +92,6 @@ def forward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
 
         add_v = np.zeros(mx + 1)
 
-        print(AFE)
-
         for j in range(0, mt):
             add_v[0] = -p(t[j])
             add_v[-1] = q(t[j])
@@ -212,8 +210,6 @@ def backward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
         ABE[0, mx - 1] = lmbda
         ABE[mx - 1, 0] = lmbda
 
-        print(ABE)
-
         ABE = ssp.csr_matrix(ABE)
 
         for j in range(0, mt):
@@ -306,9 +302,6 @@ def crank_nicholson(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
 
         B_CN[0, mx - 1] = lmbda
         B_CN[mx - 1, 0] = lmbda
-
-        print(A_CN)
-        print(B_CN)
 
         A_CN = ssp.csr_matrix(A_CN)
         B_CN = ssp.csr_matrix(B_CN)
