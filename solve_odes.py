@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import math
+import time
 
 
 def f(x, t):
@@ -196,3 +197,12 @@ if __name__ == '__main__':
     plt.ylabel('dxdt')
     plt.legend()
     plt.show()
+
+    start_t = time.time()
+    solve_ode(x0, t0, t1, f, 'runge', 0.000737)
+    final_t_r = time.time() - start_t
+
+    start_t = time.time()
+    solve_ode(x0, t0, t1, f, 'euler', 0.4714866)
+    final_t_e = time.time() - start_t
+    print(final_t_r, final_t_e)
