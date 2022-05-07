@@ -24,36 +24,38 @@ def test_input_solve_ode(x0, t0, t1, eqs, method, deltat_max, *args):
     """
 
     if isinstance(x0, tuple) or isinstance(x0, int):
-        print('starting co-ordinate(s) suitable type')
+        pass
     else:
-        print('starting co-ordinate(s) wrong type')
-        return
+        err = 1
+        return err
 
     if isinstance(t0, int) or isinstance(t0, float):
-        print('initial time suitable type')
+        pass
     else:
-        print('initial time wrong type')
-        return
+        err = 2
+        return err
 
     if isinstance(t1, int) or isinstance(t1, float):
-        print('final time suitable type')
+        pass
     else:
-        print('final time wrong type')
-        return
+        err = 3
+        return err
+
     try:
         is_fun = str(eqs)[1]
-        print(str(eqs))
         if is_fun == 'f':
-            print('system of odes suitable')
+            pass
         else:
-            print('system of odes not suitable')
-            return
+            err = 4
+            return err
     except IndexError:
         print('system of odes not suitable')
-        return
+        err = 4
+        return err
 
     if args:
         args = args[0]
+        print(args)
         try:
             eqs(x0, t0, args)
             print('args suitable')
@@ -63,24 +65,28 @@ def test_input_solve_ode(x0, t0, t1, eqs, method, deltat_max, *args):
             return
     else:
         try:
-            eqs(x0, t0)
-            print('equation and inputs suitable')
+            ret = eqs(x0, t0)
+            if isinstance(ret, int) or isinstance(ret, list):
+                print('equation and inputs suitable')
+            else:
+                err = 5
+                return err
         except (TypeError, IndexError):
             print('args needed')
             return
 
-    try:
-        eqs(x0, t0, *args)
-        print('initial conditions suitable')
-    except TypeError:
-        print('initial conditions/args not suitable')
-        return
+    # try:
+    #     eqs(x0, t0, *args)
+    #     print('initial conditions suitable')
+    # except TypeError:
+    #     print('initial conditions/args not suitable')
+    #     return
 
     if method == 'runge' or method == 'euler':
-        print('method suitable')
+        pass
     else:
-        print('method unsuitable')
-        return
+        err = 6
+        return err
     try:
         float(deltat_max)
         print('delta t suitable')
@@ -89,7 +95,7 @@ def test_input_solve_ode(x0, t0, t1, eqs, method, deltat_max, *args):
         return
 
 
-def test_input_orbit_shooting(ode, U0, *args):
+def test_input_orbit_shooting(ode, U0, pc, *args):
     """
     Function to test my input into my orbit function
     :param ode: ODE(s) to solve for
@@ -138,8 +144,12 @@ def test_input_orbit_shooting(ode, U0, *args):
         print('shooting method not a function')
         return
 
-    sol = fsolve(shooting(ode), U0, *args)
-    print(sol)
+    if args:
+        args = (pc, *args)
+        sol = fsolve(shooting(ode), U0, args)
+    else:
+        sol = fsolve(shooting(ode), U0, pc)
+    print(sol, 'sol')
 
 
 if __name__ == '__main__':
@@ -161,6 +171,47 @@ if __name__ == '__main__':
 
         return [du1dt, du2dt]
 
+    def pc_stable_0(U0, T, ode, args):
+        return ode(U0, 0, args)[0]
+
+
+    # testing for incorrect inputs
+
+    t0 = 0
+    t1 = 10
+    x0 = 'str'
+    deltat_maxx = 0.1
+    method = 'runge'
+    eqs = f
+    if test_input_solve_ode(x0, t0, t1, eqs, method, deltat_maxx) == 1:
+        print('wrong initial condition type test passed')
+
+    t0 = 'str'
+    t1 = 10
+    x0 = 1
+    deltat_maxx = 0.1
+    method = 'runge'
+    eqs = f
+    if test_input_solve_ode(x0, t0, t1, eqs, method, deltat_maxx) == 2:
+        print('wrong initial time type test passed')
+
+    t0 = 0
+    t1 = 'str'
+    x0 = 1
+    deltat_maxx = 0.1
+    method = 'runge'
+    eqs = f
+    if test_input_solve_ode(x0, t0, t1, eqs, method, deltat_maxx) == 3:
+        print('wrong final time type test passed')
+
+    t0 = 0
+    t1 = 10
+    x0 = 1
+    deltat_maxx = 0.1
+    method = 'runge'
+    eqs = 'no'
+    if test_input_solve_ode(x0, t0, t1, eqs, method, deltat_maxx) == 4:
+        print('wrong function type test passed')
 
     t0 = 0
     t1 = 10
@@ -168,20 +219,29 @@ if __name__ == '__main__':
     deltat_maxx = 0.1
     method = 'runge'
     eqs = f
-    test_input_solve_ode(x0, t0, t1, eqs, method, deltat_maxx)
+    if test_input_solve_ode(x0, t0, t1, eqs, method, deltat_maxx) == 5:
+        print('wrong initial condition length test passed')
 
+    t0 = 0
+    t1 = 10
+    x0 = 1
+    deltat_maxx = 0.1
+    method = 10
+    eqs = f
+    if test_input_solve_ode(x0, t0, t1, eqs, method, deltat_maxx) == 6:
+        print('wrong method test passed')
 
-    method = 'runge'
-    eqs = hopf
+    # method = 'runge'
+    # eqs = hopf
     # args = [1, -1]
-    x0 = 1.5, 1.5
-    t0 = 5
-    deltat_max = 0.01
+    # x0 = 1.5, 1.5
+    # t0 = 5
+    # deltat_max = 0.01
     # test_input_solve_ode(x0, t0, t1, eqs, method, deltat_maxx, args)
-
-
-    U0 = 1.5, 1.5, 5
-    # U0 = 1.5, 1.5
-    args = [1, -1]
-    # args = [1]
-    # test_input_orbit_shooting(hopf, U0, args)
+    #
+    #
+    # U0 = 1.5, 1.5, -90
+    # # U0 = 1.5, 1.5
+    # args = [1, -1]
+    # # args = [1]
+    # test_input_orbit_shooting(hopf, U0, pc_stable_0, args)
