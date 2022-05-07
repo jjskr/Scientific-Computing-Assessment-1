@@ -23,7 +23,7 @@ def q(t):
     :param t: time value
     :return: boundary condition at t
     """
-    return 1
+    return 0
 
 
 def forward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
@@ -45,7 +45,6 @@ def forward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
 
         diag = [[lmbda] * (mx - 2), [1 - 2 * lmbda] * (mx - 1), [lmbda] * (mx - 2)]
         AFE = ssp.diags(diag, [-1, 0, 1]).toarray()
-        # print(len(AFE))
         add_v = np.zeros(mx - 1)
 
         # for j in range(0, mt):
@@ -68,6 +67,7 @@ def forward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
             add_v[0] = p(t[j])
             add_v[-1] = q(t[j])
             add_v_l = add_v * lmbda
+            print(type(AFE))
             u_jp1 = np.dot(AFE, u_j + add_v_l)
             # u_j = np.zeros(mx + 1)
             # u_j[1:-1] = u_jp1[:]
@@ -75,13 +75,15 @@ def forward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
             # u_j[-1] = add_v[-1]
             u_j = u_jp1
 
-        u_jj = np.zeros(mx+1)
+        # u_jj = np.zeros(mx+1)
         # print(len(u_jj))
         # print(len(u_jp1))
-        u_jj[1:mx] = u_j
-        u_jj[0] = p(t[j])
-        u_jj[-1] = q(t[j])
-        u_j = u_jj
+        # u_jj[1:mx] = u_j
+        # u_jj[0] = p(t[j])
+        # u_jj[-1] = q(t[j])
+        # u_j = u_jj
+        u_j[0] = p(t[j])
+        u_j[-1] = q(t[j])
 
     if bc == 'neumann':
 
@@ -441,6 +443,7 @@ if __name__ == '__main__':
         y = np.exp(-kappa * (pi ** 2 / L ** 2) * t) * np.sin(pi * x / L)
         return y
 
+
     # Set problem parameters/functions
     kappa = 1.0  # diffusion constant
     L = 2.0  # length of spatial domain
@@ -452,9 +455,14 @@ if __name__ == '__main__':
     mx = 25  # number of gridpoints in space
     mt = 1000  # number of gridpoints in time
 
-    uf = solve_pde(None, mx, mt, 'CN', 'neumann', p, q, args)
-    x = np.linspace(0, L, mx + 1)
-    pl.plot(x, uf, 'ro')
+    # uf = solve_pde(None, mx, mt, 'CN', 'neumann', p, q, args)
+    # x = np.linspace(0, L, mx + 1)
+    # pl.plot(x, uf, 'ro')
+    # pl.show()
+
+    fe = solve_pde(None, mx, mt, 'FE', 'dirichlet', p, q, args)
+    x = np.linspace(0, L, mx - 1)
+    pl.plot(x, fe, 'ro')
     pl.show()
 
     # u_FE = solve_pde(None, mx, mt, 'FE', 'dirichlet', p, q, args)
