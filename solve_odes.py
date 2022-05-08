@@ -65,7 +65,6 @@ def runge_kutta(f, x, t, delta_t, *args):
     :param args: additional features/constants to pass into function
     :return: value of x and t after 1 RK4 step
     """
-
     k1 = np.array(f(x, t, *args))
     k2 = np.array(f((x + delta_t * k1/2), (t + delta_t/2), *args))
     k3 = np.array(f((x + delta_t * k2/2), (t + delta_t/2), *args))
@@ -161,10 +160,31 @@ def solve_ode(x0, t0, t1, eqs, method, deltat_max, *args):
     except ValueError:
         raise ValueError('Given delta t wrong type')
 
+    # if args:
+    #     pass
+    # else:
+    #     try:
+    #         ret = eqs(x0, t0)
+    #         print(type(ret), 'type')
+    #         if isinstance(ret, int) or isinstance(ret, list):
+    #             pass
+    #         elif isinstance(ret, tuple):
+    #             try:
+    #                 ret = ret + 1
+    #                 print(ret, 'ret')
+    #             except TypeError:
+    #                 raise TypeError('args needed/initial conditions wrong length')
+    #         else:
+    #             raise IndexError('args needed/initial conditions wrong length')
+    #     except (TypeError, IndexError):
+    #         print('args needed/initial conditions wrong length')
+    #         return
+
     x = [x0]
     t_array = []
     t_array = t_array + [t0]
     current_t = t0
+
     while t1 - current_t > deltat_max:
         current_t += deltat_max
         t_array = t_array + [current_t]
@@ -184,28 +204,29 @@ def solve_ode(x0, t0, t1, eqs, method, deltat_max, *args):
 
 if __name__ == '__main__':
 
+    # plotting runge, euler and exact solution to dxdt = x to measure method precision
+
     # Initial Conditions
     x0 = 1
     t0 = 0
     t1 = 1
     deltat_maxx = 0.01
 
-    # eul_sol_f = solve_ode(x0, t0, t1, f, 'euler', deltat_maxx)
-    #
-    # run_sol_f = solve_ode(x0, t0, t1, f, 'runge', deltat_maxx)
-    #
-    # t = np.linspace(0, 1, 101)
-    # plt.plot(t, eul_sol_f)
-    # plt.plot(t, run_sol_f)
-    # plt.plot(t, f_true(t))
-    # plt.show()
+    eul_sol_f = solve_ode(x0, t0, t1, f, 'euler', deltat_maxx)
 
-    # error_graph(x0, t0, t1, f)
-    # x0 = 0.25, 0.3
-    # args = [1, 0.16, 0.1]
-    # print(solve_ode(x0, 0, 23, pp_eqs, 'runge', 0.01, args))
+    run_sol_f = solve_ode(x0, t0, t1, f, 'runge', deltat_maxx)
 
-    # # Initial Conditions f2
+    t = np.linspace(0, 1, 101)
+    plt.plot(t, eul_sol_f)
+    plt.plot(t, run_sol_f)
+    plt.plot(t, f_true(t))
+    plt.show()
+
+    # solving 2 dimensional odes over a long time span to show long term behaviours of respective methods
+    # shown that euler spirals outwards while runge spirals inwards slightly, where we expect no diverging
+    # or converging at all
+
+    # Initial Conditions f2
     t0 = 0
     t1 = 100
     x0 = 1, 1
@@ -232,6 +253,10 @@ if __name__ == '__main__':
     plt.ylabel('dxdt')
     plt.legend()
     plt.show()
+
+    # timing euler and runge for similar error
+
+    t1 = 1
 
     start_t = time.time()
     solve_ode(x0, t0, t1, f, 'runge', 0.000737)
