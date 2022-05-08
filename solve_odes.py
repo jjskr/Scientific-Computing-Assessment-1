@@ -126,6 +126,41 @@ def solve_ode(x0, t0, t1, eqs, method, deltat_max, *args):
     :return: x values at each time value
     """
 
+    if isinstance(x0, tuple) or isinstance(x0, int) or isinstance(x0, np.ndarray):
+        pass
+    else:
+        raise TypeError('Initial conditions wrong type')
+
+    if isinstance(t0, int) or isinstance(t0, float):
+        pass
+    else:
+        raise TypeError('Initial time wrong type')
+
+    if isinstance(t1, int) or isinstance(t1, float):
+        pass
+    else:
+        raise TypeError('Final fime wrong type')
+
+    try:
+        is_fun = str(eqs)[1]
+        if is_fun == 'f':
+            pass
+        else:
+            raise TypeError('Given ode not a function')
+    except IndexError:
+        raise TypeError('Given ode not a function')
+
+    if method == 'runge' or method == 'euler':
+        pass
+    else:
+        raise TypeError('Given method not suitable')
+
+    try:
+        float(deltat_max)
+        pass
+    except ValueError:
+        raise ValueError('Given delta t wrong type')
+
     x = [x0]
     t_array = []
     t_array = t_array + [t0]

@@ -52,13 +52,6 @@ def test_input_solve_ode(x0, t0, t1, eqs, method, deltat_max, *args):
         err = 4
         return err
 
-    # try:
-    #     eqs(x0, t0, *args)
-    #     print('initial conditions suitable')
-    # except TypeError:
-    #     print('initial conditions/args not suitable')
-    #     return
-
     if method == 'runge' or method == 'euler':
         pass
     else:
@@ -70,6 +63,13 @@ def test_input_solve_ode(x0, t0, t1, eqs, method, deltat_max, *args):
     except ValueError:
         err = 7
         return err
+
+    # try:
+    #     eqs(x0, t0, *args)
+    #     print('initial conditions suitable')
+    # except TypeError:
+    #     print('initial conditions/args not suitable')
+    #     return
 
     if args:
         args = args[0]
@@ -225,3 +225,4 @@ if __name__ == '__main__':
     # args = [1, -1]
     # # args = [1]
     # test_input_orbit_shooting(hopf, U0, pc_stable_0, args)
+    solve_ode(unsuitable_x0, suitable_t0, suitable_t1, f, suitable_method, suitable_dt)
