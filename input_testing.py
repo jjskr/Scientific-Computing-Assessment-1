@@ -10,88 +10,89 @@ from num_shooting import shooting
 from scipy.optimize import fsolve
 
 
-def test_input_solve_ode(x0, t0, t1, eqs, method, deltat_max, *args):
-    """
-    Function used to test inputs to solve odes
-    :param x0: initial conditions
-    :param t0: initial time
-    :param t1: final time
-    :param eqs: ODE(s) to solve
-    :param method: step method to use
-    :param deltat_max: max step size
-    :param args: additional arguments needed by ODE(s)
-    :return: nothing if tests pass, message if a test fails
-    """
+def code_testing_solve_ode():
 
-    if isinstance(x0, tuple) or isinstance(x0, int):
-        pass
-    else:
-        err = 1
-        return err
+    # testing for incorrect inputs
 
-    if isinstance(t0, int) or isinstance(t0, float):
-        pass
-    else:
-        err = 2
-        return err
+    suitable_x0 = 0
+    suitable_t0 = 0
+    suitable_t1 = 10
+    suitable_dt = 0.01
+    suitable_method = 'runge'
 
-    if isinstance(t1, int) or isinstance(t1, float):
-        pass
-    else:
-        err = 3
-        return err
+    unsuitable_x0 = 'str'
+    long_x0_f = 1, 1
+    unsuitable_t0 = 'str'
+    unsuitable_t1 = 'str'
+    unsuitable_dt = 'str'
+    unsuitable_method = 10
+    unsuitable_eq = 10
+
+    tests_passed = []
+    tests_failed = []
 
     try:
-        is_fun = str(eqs)[1]
-        if is_fun == 'f':
-            pass
-        else:
-            err = 4
-            return err
-    except IndexError:
-        err = 4
-        return err
+        solve_ode(unsuitable_x0, suitable_t0, suitable_t1, f, suitable_method, suitable_dt)
+        tests_failed = tests_failed + ['unsuitable initial conditions type test']
+    except TypeError:
+        tests_passed = tests_passed + ['unsuitable initial conditions type test']
 
-    if method == 'runge' or method == 'euler':
-        pass
-    else:
-        err = 6
-        return err
     try:
-        float(deltat_max)
-        pass
+        solve_ode(suitable_x0, unsuitable_t0, suitable_t1, f, suitable_method, suitable_dt)
+        tests_failed = tests_failed + ['unsuitable initial time type test']
+    except TypeError:
+        tests_passed = tests_passed + ['unsuitable initial time type test']
+
+    try:
+        solve_ode(suitable_x0, suitable_t0, unsuitable_t1, f, suitable_method, suitable_dt)
+        tests_failed = tests_failed + ['unsuitable final time type test']
+    except TypeError:
+        tests_passed = tests_passed + ['unsuitable final time type test']
+
+    try:
+        solve_ode(suitable_x0, suitable_t0, suitable_t1, unsuitable_eq, suitable_method, suitable_dt)
+        tests_failed = tests_failed + ['unsuitable function type test']
+    except TypeError:
+        tests_passed = tests_passed + ['unsuitable function type test']
+
+    try:
+        ans = solve_ode(long_x0_f, suitable_t0, suitable_t1, f, suitable_method, suitable_dt)
+        try:
+            list(ans)
+            tests_failed = tests_failed + ['args needed/unsuitable initial conditions length test']
+        except TypeError:
+            tests_passed = tests_passed + ['args needed/unsuitable initial conditions length test']
+    except (IndexError, TypeError):
+        tests_passed = tests_passed + ['args needed/unsuitable initial conditions length test']
+
+    try:
+        solve_ode(suitable_x0, suitable_t0, suitable_t1, f, unsuitable_method, suitable_dt)
+        tests_failed = tests_failed + ["unsuitable method type test"]
+    except TypeError:
+        tests_passed = tests_passed + ["unsuitable method type test"]
+
+    try:
+        solve_ode(suitable_x0, suitable_t0, suitable_t1, f, suitable_method, unsuitable_dt)
+        tests_failed = tests_failed + ['unsuitable dt type test']
     except ValueError:
-        err = 7
-        return err
+        tests_passed = tests_passed + ['unsuitable dt type test']
 
-    # try:
-    #     eqs(x0, t0, *args)
-    #     print('initial conditions suitable')
-    # except TypeError:
-    #     print('initial conditions/args not suitable')
-    #     return
+    return tests_failed, tests_passed
 
-    if args:
-        args = args[0]
-        print(args)
-        try:
-            eqs(x0, t0, args)
-            print('args suitable')
 
-        except (TypeError, IndexError):
-            print('args not suitable')
-            return
-    else:
-        try:
-            ret = eqs(x0, t0)
-            if isinstance(ret, int) or isinstance(ret, list):
-                print('equation and inputs suitable')
-            else:
-                err = 5
-                return err
-        except (TypeError, IndexError):
-            print('args needed')
-            return
+def code_testing_orbit_function():
+
+    suitable_U0 = 1.5, 1.5, 5
+    suitable_ode = hopf
+    suitable_pc = pc_stable_0
+    suitable_args = [1, -1]
+
+    unsuitable_U0 = 'str'
+    unsuitable_ode = 'str'
+    unsuitable_pc = 'str'
+    unsuitable_args = 0
+
+
 
 
 def test_input_orbit_shooting(ode, U0, pc, *args):
@@ -159,6 +160,42 @@ def test_input_orbit_shooting(ode, U0, pc, *args):
     print(sol, 'sol')
 
 
+def test_input_solve_ode(x0, t0, t1, eqs, method, deltat_max, *args):
+    """
+    Function used to test inputs to solve odes
+    :param x0: initial conditions
+    :param t0: initial time
+    :param t1: final time
+    :param eqs: ODE(s) to solve
+    :param method: step method to use
+    :param deltat_max: max step size
+    :param args: additional arguments needed by ODE(s)
+    :return: nothing if tests pass, message if a test fails
+    """
+
+    if args:
+        args = args[0]
+        print(args)
+        try:
+            eqs(x0, t0, args)
+            print('args suitable')
+
+        except (TypeError, IndexError):
+            print('args not suitable')
+            return
+    else:
+        try:
+            ret = eqs(x0, t0)
+            if isinstance(ret, int) or isinstance(ret, list):
+                print('equation and inputs suitable')
+            else:
+                err = 5
+                return err
+        except (TypeError, IndexError):
+            print('args needed')
+            return
+
+
 if __name__ == '__main__':
 
     def hopf(U0, t, args):
@@ -182,43 +219,10 @@ if __name__ == '__main__':
         return ode(U0, 0, args)[0]
 
 
-    # testing for incorrect inputs
+    tests_failed, tests_passed = code_testing_solve_ode()
 
-    suitable_x0 = 0
-    suitable_t0 = 0
-    suitable_t1 = 10
-    suitable_dt = 0.01
-    suitable_method = 'runge'
-
-    unsuitable_x0 = 'str'
-    long_x0_f = 1, 1
-    unsuitable_t0 = 'str'
-    unsuitable_t1 = 'str'
-    unsuitable_dt = 'str'
-    unsuitable_method = 10
-    unsuitable_eq = 10
-
-    if test_input_solve_ode(unsuitable_x0, suitable_t0, suitable_t1, f, suitable_method, suitable_dt) == 1:
-        print('wrong initial condition type test passed')
-
-    if test_input_solve_ode(suitable_x0, unsuitable_t0, suitable_t1, f, suitable_method, suitable_dt) == 2:
-        print('wrong initial time type test passed')
-
-    if test_input_solve_ode(suitable_x0, suitable_t0, unsuitable_t1, f, suitable_method, suitable_dt) == 3:
-        print('wrong final time type test passed')
-
-    if test_input_solve_ode(suitable_x0, suitable_t0, suitable_t1, unsuitable_eq, suitable_method, suitable_dt) == 4:
-        print('wrong function type test passed')
-
-    if test_input_solve_ode(long_x0_f, suitable_t0, suitable_t1, f, suitable_method, suitable_dt) == 5:
-        print('wrong initial condition length test passed')
-
-    if test_input_solve_ode(suitable_x0, suitable_t0, suitable_t1, f, unsuitable_method, suitable_dt) == 6:
-        print('wrong method test passed')
-
-    if test_input_solve_ode(suitable_x0, suitable_t0, suitable_t1, f, suitable_method, unsuitable_dt) == 7:
-        print('wrong delta t type test passed')
-
+    print(tests_failed)
+    print(tests_passed)
     # method = 'runge'
     eqs = hopf
     ode = hopf
@@ -234,5 +238,5 @@ if __name__ == '__main__':
     args = [1, -1]
     # args = [1]
     # test_input_orbit_shooting(hopf, U0, pc_stable_0, args)
-    orb = orbit(hopf, U0, pc_stable_0, args)
+    # orb = orbit(hopf, U0, pc_stable_0, args)
     # solve_ode(unsuitable_x0, suitable_t0, suitable_t1, f, suitable_method, suitable_dt)
