@@ -106,22 +106,30 @@ def test_input_orbit_shooting(ode, U0, pc, *args):
     try:
         ini_cons = len(U0)
     except TypeError:
-        print('initial conditions wrong type')
-        return
+        raise TypeError('Initial conditions wrong type')
 
-    if ini_cons > 1:
-        u0, t0 = U0[:-1], U0[-1]
+    if ini_cons < 1:
+        raise IndexError('Initial conditions too short')
     else:
-        print('initial conditions too short')
-        return
+        u0, t0 = U0[:-1], U0[-1]
 
     try:
         is_fun = str(ode)[1]
         if is_fun == 'f':
             pass
+        else:
+            raise TypeError('Given ode(s) not a function')
     except (IndexError, TypeError):
-        print('system of odes not suitable')
-        return
+        raise TypeError('Given ode(s) not a function')
+
+    try:
+        is_fun = str(pc)[1]
+        if is_fun == 'f':
+            pass
+        else:
+            raise TypeError('Given phase condition not a function')
+    except (IndexError, TypeError):
+        raise TypeError('Given phase condition not a function')
 
     try:
         ode(u0, t0, *args)
@@ -212,7 +220,8 @@ if __name__ == '__main__':
         print('wrong delta t type test passed')
 
     # method = 'runge'
-    # eqs = hopf
+    eqs = hopf
+    ode = hopf
     # args = [1, -1]
     # x0 = 1.5, 1.5
     # t0 = 5
@@ -220,9 +229,10 @@ if __name__ == '__main__':
     # test_input_solve_ode(x0, t0, t1, eqs, method, deltat_maxx, args)
     #
     #
-    # U0 = 1.5, 1.5, -90
-    # # U0 = 1.5, 1.5
-    # args = [1, -1]
-    # # args = [1]
+    U0 = 1.5, 1.5, 5
+    # U0 = 1.5, 1.5, -700
+    args = [1, -1]
+    # args = [1]
     # test_input_orbit_shooting(hopf, U0, pc_stable_0, args)
-    solve_ode(unsuitable_x0, suitable_t0, suitable_t1, f, suitable_method, suitable_dt)
+    orb = orbit(hopf, U0, pc_stable_0, args)
+    # solve_ode(unsuitable_x0, suitable_t0, suitable_t1, f, suitable_method, suitable_dt)

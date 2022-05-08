@@ -42,7 +42,37 @@ def orbit(ode, U0, pc, *args):
     :param args: Arguments needed by system of odes
     :return: Solution of initial conditions and time period of one orbit in the form of an array
     """
+
+    try:
+        ini_cons = len(U0)
+    except TypeError:
+        raise TypeError('Initial conditions wrong type')
+
+    if ini_cons < 1:
+        raise IndexError('Initial conditions too short')
+    else:
+        u0, t0 = U0[:-1], U0[-1]
+
+    try:
+        is_fun = str(ode)[1]
+        if is_fun == 'f':
+            pass
+        else:
+            raise TypeError('Given ode(s) not a function')
+    except (IndexError, TypeError):
+        raise TypeError('Given ode(s) not a function')
+
+    try:
+        is_fun = str(pc)[1]
+        if is_fun == 'f':
+            pass
+        else:
+            raise TypeError('Given phase condition not a function')
+    except (IndexError, TypeError):
+        raise TypeError('Given phase condition not a function')
+
     sol = fsolve(shooting(ode), U0, args=(pc, *args))
+
     return sol
 
 
@@ -160,7 +190,6 @@ if __name__ == '__main__':
     t = np.linspace(0, 100, t_val)
     plt.plot(t, sol_mine)
     plt.show()
-    print('ok')
 
     # plotting phase portrait
     shooting_plots(U0, ode, pc, args)
