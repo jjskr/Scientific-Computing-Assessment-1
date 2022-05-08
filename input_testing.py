@@ -21,7 +21,7 @@ def code_testing_solve_ode():
     suitable_method = 'runge'
 
     unsuitable_x0 = 'str'
-    long_x0_f = 1, 1
+    long_x0_f = [1, 1]
     unsuitable_t0 = 'str'
     unsuitable_t1 = 'str'
     unsuitable_dt = 'str'
@@ -31,46 +31,60 @@ def code_testing_solve_ode():
     tests_passed = []
     tests_failed = []
 
+    # test initial conditions dimensions
+    try:
+        solve_ode(long_x0_f, suitable_t0, suitable_t1, f, suitable_method, suitable_dt)
+        tests_failed = tests_failed + ['unsuitable initial condition dimensions']
+    except TypeError:
+        tests_passed = tests_passed + ['unsuitable initial condition dimensions']
+
+    # test initial conditions type
     try:
         solve_ode(unsuitable_x0, suitable_t0, suitable_t1, f, suitable_method, suitable_dt)
         tests_failed = tests_failed + ['unsuitable initial conditions type test']
     except TypeError:
         tests_passed = tests_passed + ['unsuitable initial conditions type test']
 
+    # test initial time type
     try:
         solve_ode(suitable_x0, unsuitable_t0, suitable_t1, f, suitable_method, suitable_dt)
         tests_failed = tests_failed + ['unsuitable initial time type test']
     except TypeError:
         tests_passed = tests_passed + ['unsuitable initial time type test']
 
+    # test final time type
     try:
         solve_ode(suitable_x0, suitable_t0, unsuitable_t1, f, suitable_method, suitable_dt)
         tests_failed = tests_failed + ['unsuitable final time type test']
     except TypeError:
         tests_passed = tests_passed + ['unsuitable final time type test']
 
+    # test ode type
     try:
         solve_ode(suitable_x0, suitable_t0, suitable_t1, unsuitable_eq, suitable_method, suitable_dt)
         tests_failed = tests_failed + ['unsuitable function type test']
     except TypeError:
         tests_passed = tests_passed + ['unsuitable function type test']
 
-    try:
-        ans = solve_ode(long_x0_f, suitable_t0, suitable_t1, f, suitable_method, suitable_dt)
-        try:
-            list(ans)
-            tests_failed = tests_failed + ['args needed/unsuitable initial conditions length test']
-        except TypeError:
-            tests_passed = tests_passed + ['args needed/unsuitable initial conditions length test']
-    except (IndexError, TypeError):
-        tests_passed = tests_passed + ['args needed/unsuitable initial conditions length test']
 
+    # try:
+    #     ans = solve_ode(long_x0_f, suitable_t0, suitable_t1, f, suitable_method, suitable_dt)
+    #     try:
+    #         list(ans)
+    #         tests_failed = tests_failed + ['args needed/unsuitable initial conditions length test']
+    #     except TypeError:
+    #         tests_passed = tests_passed + ['args needed/unsuitable initial conditions length test']
+    # except (IndexError, TypeError):
+    #     tests_passed = tests_passed + ['args needed/unsuitable initial conditions length test']
+
+    # test method type
     try:
         solve_ode(suitable_x0, suitable_t0, suitable_t1, f, unsuitable_method, suitable_dt)
         tests_failed = tests_failed + ["unsuitable method type test"]
     except TypeError:
         tests_passed = tests_passed + ["unsuitable method type test"]
 
+    # test dt type
     try:
         solve_ode(suitable_x0, suitable_t0, suitable_t1, f, suitable_method, unsuitable_dt)
         tests_failed = tests_failed + ['unsuitable dt type test']
@@ -88,7 +102,7 @@ def code_testing_orbit_function():
     suitable_args = [1, -1]
 
     unsuitable_U0 = 'str'
-    unsuitable_U0 = 1
+    unsuitable_U0_L = 1, 1
     unsuitable_ode = 'str'
     unsuitable_pc = 'str'
     unsuitable_args = 0
@@ -96,12 +110,21 @@ def code_testing_orbit_function():
     tests_failed = []
     tests_passed = []
 
+    # test initial condition dimensions
+    try:
+        orbit(suitable_ode, unsuitable_U0_L, suitable_pc, suitable_args)
+        tests_failed = tests_failed + ['unsuitable initial condition dimensions']
+    except TypeError:
+        tests_passed = tests_passed + ['unsuitable initial condition dimensions']
+
+    # test ode type
     try:
         orbit(unsuitable_ode, suitable_U0, suitable_pc, suitable_args)
         tests_failed = tests_failed + ['unsuitable ode test']
     except TypeError:
         tests_passed = tests_passed + ['unsuitable ode test']
 
+    # test
     try:
         orbit(suitable_ode, unsuitable_U0, suitable_pc, suitable_args)
         tests_failed = tests_failed + ['unsuitable initial conditions test']
@@ -113,6 +136,12 @@ def code_testing_orbit_function():
         tests_failed = tests_failed + ['unsuitable phase condition test']
     except TypeError:
         tests_passed = tests_passed + ['unsuitable phase condition test']
+
+    # try:
+    #     orbit(suitable_ode, unsuitable_U0_L, suitable_pc, suitable_args)
+    #     tests_failed = tests_failed + ['uunsuitable initial condition dimensions']
+    # except IndexError:
+    #     tests_passed = tests_passed + ['unsuitable initial condition dimensions']
 
     return tests_failed, tests_passed
 
