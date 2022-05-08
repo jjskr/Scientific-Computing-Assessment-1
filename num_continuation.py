@@ -91,6 +91,7 @@ def nat_continuation(ode, U0, par_min, par_max, par_split, pc, discretisation, s
 
     solut_list = []
 
+    # rounding can be more lenient with pde calculations
     if solver == 'cont_pde':
         rou = 10
         solver = cont_pde
@@ -169,9 +170,7 @@ def psuedo_continuation(ode, U0, par_min, par_max, par_split, discretisation, so
 
         pred_ar = np.array(pred_ar)
 
-        sol = solver(lambda cur_s: np.append(discretisation(ode)(cur_s[:-1], p_upd(cur_s[-1])),
-                                                    np.dot(cur_s[:-1] - pred_x, delta_x) + np.dot(cur_s[-1] - pred_p,
-                                                                                                  delta_p)), pred_ar)
+        sol = solver(lambda cur_s: np.append(discretisation(ode)(cur_s[:-1], p_upd(cur_s[-1])), np.dot(cur_s[:-1] - pred_x, delta_x) + np.dot(cur_s[-1] - pred_p, delta_p)), pred_ar)
 
         sol_add = sol[:-1][0]
         par_add = sol[-1]
@@ -274,6 +273,19 @@ def psuedo_continuation_h(ode, U0, par_min, par_max, par_split, discretisation, 
 
 
 def continuation(method, ode, U0, par_min, par_max, par_split, pc, discretisation, solver=fsolve):
+    """
+    Continuation function passing parameters onto desired method of continuation
+    :param method: choice between 'euler' and 'runge'
+    :param ode: system of ODEs to perform chosen continuation on
+    :param U0: initial conditions
+    :param par_min: parameter to begin at
+    :param par_max: parameter to finish at
+    :param par_split: number of splits in parameter list
+    :param pc: phase condition - None if not required
+    :param discretisation: method of discretisation - 'pseudo' or 'natural'
+    :param solver: solver defaults as fsolve, cont_pde for pdes
+    :return: solutions for parameters in parameter list
+    """
 
     if method == 'pseudo':
         sols, pars = psuedo_continuation(ode, U0, par_min, par_max, par_split, discretisation, solver)
@@ -304,7 +316,6 @@ if __name__ == '__main__':
     pmax = 2
     pstep = 100
     #
-    # par_list, solutions = nat_continuation(cubic_eq, U0, pmin, pmax, pstep, None, lambda x: x)
     par_list, solutions = continuation('natural', cubic_eq, U0, pmin, pmax, pstep, None, lambda x: x)
     plt.plot(par_list, solutions, label='natural parameter')
     # #
@@ -313,7 +324,6 @@ if __name__ == '__main__':
     pmax = 2
     pstep = 100
 
-    # sol_l, p_l = psuedo_continuation(cubic_eq, U0, pmin, pmax, pstep, lambda x: x)
     sol_l, p_l = continuation('pseudo', cubic_eq, U0, pmin, pmax, pstep, None, lambda x: x)
     plt.plot(p_l, sol_l, label='pseudo-arclength')
     plt.title('Plot showing performance of continuation methods on cubic equation')
@@ -327,7 +337,6 @@ if __name__ == '__main__':
     pmax = 0
     pstep = 50
 
-    # par_list, solutions = nat_continuation(hopfn, U0, pmin, pmax, pstep, pc_stable_0, shooting)
     par_list, solutions = continuation('natural', hopfn, U0, pmin, pmax, pstep, pc_stable_0, shooting)
     U0_sols = []
     for i in solutions:
@@ -342,7 +351,6 @@ if __name__ == '__main__':
     pmax = -1
     pstep = 34
 
-    # par_list_m, solutions_m = nat_continuation(hopfm, U0, pmin, pmax, pstep, pc_stable_0, shooting)
     par_list_m, solutions_m = continuation('natural', hopfm, U0, pmin, pmax, pstep, pc_stable_0, shooting)
     U0_sols_m = []
     for i in solutions_m:
@@ -350,40 +358,19 @@ if __name__ == '__main__':
     plt.plot(par_list_m, U0_sols_m)
     plt.title('Plot showing performance of natural continuation on modified Hopfield equations')
     plt.show()
-    #
-    # # pde continuation, varying t between 0 and 0.5 with homogeneous boundaries
-    #
-    kappa = 1.0  # diffusion constant
-    L = 1.0  # length of spatial domain
-    T = 0.5  # total time to solve for
 
-    mx = 30  # number of gridpoints in space
-    mt = 1000  # number of gridpoints in time
-
-
-    def u_initial(x):
-        # initial temperature distribution
-        y = np.sin(pi * x / L)
-        return y
-
-
-    def p(t):
-        return 0
-
-
-    def q(t):
-        return 0
-
+    # pde continuation, varying t between 0 and 0.5 with homogeneous boundaries
 
     def pdef(U0, arg):
         """
-        Function for solver to find root of
+        Function to return the function for solver to find root of
         :param U0: initial conditions (unused)
         :param arg: time value (can be changed but have to change index of 'arg' in args below)
                     index: 0 = kappa, 1 = length, 2 = time
         :return: state of PDE at chosen time
         """
-
+        # can vary changing parameter by change position of arg in list below
+        # very tidious would change this with more time
         args = [1, 1, arg]
         u_j = solve_pde(mx, mt, 'CN', 'dirichlet', p, q, False, args)
 
@@ -391,12 +378,40 @@ if __name__ == '__main__':
 
 
     def cont_pde(f, U0, args):
-
+        """
+        New solver defined as fsolve is not suitable, we need to pass on to solve_pde instead
+        :param f:
+        :param U0:
+        :param args:
+        :return:
+        """
         return f(U0, args)
 
-    U0 = np.ones(mx+1)
-    param, sols = continuation('natural', pdef, U0, 0, 0.5, 11, None, lambda x: x, 'cont_pde')
-    t = np.linspace(0, T, mx + 1)  # mesh points in time
+    # define homogeneous boundary conditions
+
+    def p(t):
+        """
+        LHS boundary condition
+        :param t: time value
+        :return: boundary condition at t
+        """
+        return 0
+
+
+    def q(t):
+        """
+        RHS boundary condition
+        :param t: time value
+        :return: boundary condition at t
+        """
+        return 0
+
+    mx = 30  # number of gridpoints in space
+    mt = 1000  # number of gridpoints in time
+
+    U0 = np.zeros(mx+1)
+    param, sols = continuation('natural', pdef, U0, 0, 0.5, 5, None, lambda x: x, 'cont_pde')
+    t = np.linspace(0, 0.5, mx + 1)  # mesh points in time
 
     j = 0
 
@@ -409,6 +424,5 @@ if __name__ == '__main__':
 
     plt.title('Plot showing the state of the grid as time varies')
     plt.show()
-
 
     # solve_pde(mx, mt, 'CN', 'dirichlet', p, q, 2)
