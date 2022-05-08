@@ -161,10 +161,15 @@ def backward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
     :return: conditions at t=T
     """
 
+    dias = [-lmbda, 1+2*lmbda, -lmbda]
+
     if bc == 'dirichlet':
 
+        m_len = mx - 1
         diag = [[-lmbda] * (mx - 2), [1 + 2 * lmbda] * (mx - 1), [-lmbda] * (mx - 2)]
         ABE = ssp.diags(diag, [-1, 0, 1]).toarray()
+        M = tri_mat(dias, m_len)
+
         add_v = np.zeros(mx - 1)
 
         for j in range(0, mt):
@@ -181,10 +186,16 @@ def backward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
 
     if bc == 'neumann':
 
+        m_len = mx + 1
         diag = [[-lmbda] * mx, [1 + 2 * lmbda] * (mx + 1), [-lmbda] * mx]
         ABE = ssp.diags(diag, [-1, 0, 1]).toarray()
+        M = tri_mat(dias, m_len)
+
         ABE[0, 1] = 2 * lmbda
         ABE[mx, mx - 1] = 2 * lmbda
+
+        M[0, 1] = 2 * lmbda
+        M[mx, mx - 1] = 2 * lmbda
 
         # print(ABE)
 
@@ -208,8 +219,11 @@ def backward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
 
         diag = [[-lmbda] * (mx-1), [1 + 2 * lmbda] * mx, [-lmbda] * (mx-1)]
         ABE = ssp.diags(diag, [-1, 0, 1]).toarray()
+        M = tri_mat(dias, mx)
         ABE[0, mx - 1] = lmbda
         ABE[mx - 1, 0] = lmbda
+        M[0, mx - 1] = lmbda
+        M[mx - 1, 0] = lmbda
 
         ABE = ssp.csr_matrix(ABE)
 
@@ -239,12 +253,18 @@ def crank_nicholson(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
     :return: conditions at t=T
     """
 
-    if bc == 'dirichlet':
+    dia1 = [-lmbda/2, 1+lmbda, -lmbda/2]
+    dia2 = [lmbda/2, 1-lmbda, lmbda/2]
 
+    if bc == 'dirichlet':
+        m_len = mx - 1
         diag_A = [[-lmbda / 2] * (mx - 2), [1 + lmbda] * (mx-1), [-lmbda / 2] * (mx - 2)]
         diag_B = [[lmbda / 2] * (mx - 2), [1 - lmbda] * (mx-1), [lmbda / 2] * (mx - 2)]
         A_CN = ssp.diags(diag_A, [-1, 0, 1])
         B_CN = ssp.diags(diag_B, [-1, 0, 1])
+        MA = tri_mat(dia1, m_len)
+        MB = tri_mat(dia2, m_len)
+
         # diag = [[-lmbda] * (mx - 2), [1 + 2 * lmbda] * (mx - 1), [-lmbda] * (mx - 2)]
         # ABE = ssp.diags(diag, [-1, 0, 1]).toarray()
         add_v = np.zeros(mx - 1)
@@ -261,16 +281,27 @@ def crank_nicholson(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
             u_j[-1] = add_v[-1]
 
     if bc == 'neumann':
-
+        m_len = mx + 1
         diag_A = [[-lmbda / 2] * mx, [1 + lmbda] * (mx+1), [-lmbda / 2] * mx]
         diag_B = [[lmbda / 2] * mx, [1 - lmbda] * (mx+1), [lmbda / 2] * mx]
+
         A_CN = ssp.diags(diag_A, [-1, 0, 1]).toarray()
         B_CN = ssp.diags(diag_B, [-1, 0, 1]).toarray()
+
+        MA = tri_mat(dia1, m_len)
+        MB = tri_mat(dia2, m_len)
 
         A_CN[0, 1] = 2 * lmbda
         A_CN[mx, mx-1] = 2 * lmbda
         B_CN[0, 1] = 2 * lmbda
         B_CN[mx, mx-1] = 2 * lmbda
+
+        MA[0, 1] = 2 * lmbda
+        MA[mx, mx-1] = 2 * lmbda
+        MB[0, 1] = 2 * lmbda
+        MB[mx, mx-1] = 2 * lmbda
+        print(A_CN)
+        print(MA)
 
         A_CN = ssp.csr_matrix(A_CN)
         B_CN = ssp.csr_matrix(B_CN)
@@ -301,11 +332,20 @@ def crank_nicholson(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
         A_CN = ssp.diags(diag_A, [-1, 0, 1]).toarray()
         B_CN = ssp.diags(diag_B, [-1, 0, 1]).toarray()
 
+        MA = tri_mat(dia1, mx)
+        MB = tri_mat(dia2, mx)
+
         A_CN[0, mx - 1] = lmbda
         A_CN[mx - 1, 0] = lmbda
 
         B_CN[0, mx - 1] = lmbda
         B_CN[mx - 1, 0] = lmbda
+
+        MA[0, mx - 1] = lmbda
+        MA[mx - 1, 0] = lmbda
+
+        MB[0, mx - 1] = lmbda
+        MB[mx - 1, 0] = lmbda
 
         A_CN = ssp.csr_matrix(A_CN)
         B_CN = ssp.csr_matrix(B_CN)
@@ -463,7 +503,7 @@ if __name__ == '__main__':
     # pl.plot(x, uf, 'ro')
     # pl.show()
 
-    fe = solve_pde(None, mx, mt, 'FE', 'periodic', p, q, args)
+    fe = solve_pde(None, mx, mt, 'CN', 'neumann', p, q, args)
     # x = np.linspace(0, args[1], mx + 1)
     # pl.plot(x, fe, 'ro')
     # pl.show()
