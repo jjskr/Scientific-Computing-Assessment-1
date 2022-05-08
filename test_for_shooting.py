@@ -2,6 +2,7 @@ import numpy as np
 from solve_odes import solve_ode
 from num_shooting import shooting
 from num_shooting import orbit
+import math
 
 
 def pc_stable_0(U0, T, ode, args):
@@ -99,6 +100,11 @@ def test_shooting_solutions(U0, ode, f_true_sol, args):
 
     X0, T = orb_sol[:-1], orb_sol[-1]
 
+    if T - 2*math.pi > 10**-8:
+        test_status = 1
+    else:
+        test_status = 0
+
     x_vals = solve_ode(X0, 0, T, ode, 'runge', 0.01, args)
 
     t_array = []
@@ -140,21 +146,30 @@ def test_shooting_solutions(U0, ode, f_true_sol, args):
     return test_status
 
 
-# method = 'runge'
-# ode = hopf
-args = [1, -1]
-# U0 = 1.5, 1.5, 5
-# X0 = 1.5, 1.5
-# T = 5
-#
-# deltat_max = 0.01
-#
-# print(test_shooting_solutions(U0, ode, true_sol, args))
-#
-#
-ode = hopf_3
-U0 = 1.5, 1.5, 1.5, 6
-X0 = 1.5, 1.5, 1.5
-T = 6
+if __name__ == '__main__':
 
-print(test_shooting_solutions(U0, ode, true_sol_3, args))
+    # functions called to test the results obtained by solve_ode function and orbit to ensure correct values are
+    # found. tests that time period found is approximately equal to 2*pi
+
+    method = 'runge'
+    ode = hopf
+    args = [1, -1]
+    U0 = 1.5, 1.5, 5
+    X0 = 1.5, 1.5
+    T = 5
+    deltat_max = 0.01
+
+    if test_shooting_solutions(U0, ode, true_sol, args) == 0:
+        print('test passed for ordinary hopf')
+    else:
+        print('test failed for ordinary hopf')
+
+    ode = hopf_3
+    U0 = 1.5, 1.5, 1.5, 6
+    X0 = 1.5, 1.5, 1.5
+    T = 6
+
+    if test_shooting_solutions(U0, ode, true_sol_3, args) == 0:
+        print('test passed for 3 dimensional hopf')
+    else:
+        print('test failed for 3 dimensional hopf')
