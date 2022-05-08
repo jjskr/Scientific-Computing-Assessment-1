@@ -88,11 +88,33 @@ def code_testing_orbit_function():
     suitable_args = [1, -1]
 
     unsuitable_U0 = 'str'
+    unsuitable_U0 = 1
     unsuitable_ode = 'str'
     unsuitable_pc = 'str'
     unsuitable_args = 0
 
+    tests_failed = []
+    tests_passed = []
 
+    try:
+        orbit(unsuitable_ode, suitable_U0, suitable_pc, suitable_args)
+        tests_failed = tests_failed + ['unsuitable ode test']
+    except TypeError:
+        tests_passed = tests_passed + ['unsuitable ode test']
+
+    try:
+        orbit(suitable_ode, unsuitable_U0, suitable_pc, suitable_args)
+        tests_failed = tests_failed + ['unsuitable initial conditions test']
+    except TypeError:
+        tests_passed = tests_passed + ['unsuitable initial conditions test']
+
+    try:
+        orbit(suitable_ode, suitable_U0, unsuitable_pc, suitable_args)
+        tests_failed = tests_failed + ['unsuitable phase condition test']
+    except TypeError:
+        tests_passed = tests_passed + ['unsuitable phase condition test']
+
+    return tests_failed, tests_passed
 
 
 def test_input_orbit_shooting(ode, U0, pc, *args):
@@ -220,9 +242,12 @@ if __name__ == '__main__':
 
 
     tests_failed, tests_passed = code_testing_solve_ode()
+    tests_failed_1, tests_passed_1 = code_testing_orbit_function()
 
     print(tests_failed)
     print(tests_passed)
+    print(tests_failed_1)
+    print(tests_passed_1)
     # method = 'runge'
     eqs = hopf
     ode = hopf
