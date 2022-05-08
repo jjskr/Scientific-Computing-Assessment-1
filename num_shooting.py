@@ -15,19 +15,21 @@ def shooting(ode):
 
     def conditions(U0, *args):
 
-        X0, T = U0[:-1], U0[-1]
+        if len(args) == 1:
+            args = args[0]
+            pc = args[0]
+            args = args[1:]
+        else:
+            pc = args[0]
+            args = args[1:]
 
-        pc = args[0]
-        args = args[1:]
+        X0, T = U0[:-1], U0[-1]
         sols = solve_ode(X0, 0, T, ode, 'runge', 0.01, *args)
         sol = sols[-1, :]
-        # print(X0)
         phase_cond = pc(X0, T, ode, *args)
-        # phase_cond = ode(U0, 0, args)[0]
-        period_cond = [X0[0] - sol[0], X0[1] - sol[1]]
-
-        if len(sol) == 3:
-            period_cond = [X0[0] - sol[0], X0[1] - sol[1], X0[2] - sol[2]]
+        period_cond = []
+        for i in range(len(sol)):
+            period_cond = period_cond + [X0[i] - sol[i]]
 
         return np.r_[phase_cond, period_cond]
 
@@ -45,13 +47,10 @@ def orbit(ode, U0, pc, *args):
 
     try:
         ini_cons = len(U0)
+        if ini_cons < 2:
+            raise IndexError('Initial conditions too short')
     except TypeError:
         raise TypeError('Initial conditions wrong type')
-
-    if ini_cons < 1:
-        raise IndexError('Initial conditions too short')
-    else:
-        u0, t0 = U0[:-1], U0[-1]
 
     try:
         is_fun = str(ode)[1]
@@ -196,13 +195,6 @@ if __name__ == '__main__':
 
     # plotting orbit found by orbit function for predator prey equations
     shooting_one_cycle(U0, ode, pc, args)
-    # orb = orbit(ode, U0, pc, args)
-    # sol_mine = solve_ode(orb[:-1], 0, orb[-1], ode, 'runge', 0.01, args)
-    # t_val = math.ceil(orb[-1]/0.01) + 1
-    # t = np.linspace(0, orb[-1], t_val)
-    # plt.plot(t, sol_mine)
-    # plt.show()
-
 
     # initial guess hopf
     # method = 'runge'
