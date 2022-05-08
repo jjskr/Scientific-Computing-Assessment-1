@@ -26,6 +26,14 @@ def q(t):
     return 0
 
 
+def tri_mat(dias, m_len):
+
+    diags = [[dias[0]] * (m_len - 1), [dias[1]] * m_len, [dias[2]] * (m_len - 1)]
+    M = ssp.diags(diags, [-1, 0, 1]).toarray()
+
+    return M
+
+
 def forward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
     """
     Function to perform finite differences using forward euler method
@@ -40,67 +48,54 @@ def forward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
     :param t: linspace for t
     :return: conditions at t=T
     """
+    dias = [lmbda, 1-2*lmbda, lmbda]
 
     if bc == 'dirichlet':
 
+        m_len = mx-1
         diag = [[lmbda] * (mx - 2), [1 - 2 * lmbda] * (mx - 1), [lmbda] * (mx - 2)]
         AFE = ssp.diags(diag, [-1, 0, 1]).toarray()
-        add_v = np.zeros(mx - 1)
-
-        # for j in range(0, mt):
-        #
-        #     add_v[0] = p(j)
-        #     add_v[-1] = q(j)
-        #     add_v_l = add_v * lmbda
-        #     u_jp1 = np.dot(AFE, u_j[1:mx] + add_v_l)
-        #     u_j = np.zeros(mx + 1)
-        #     u_j[1:-1] = u_jp1[:]
-        #     u_j[0] = add_v[0]
-        #     u_j[-1] = add_v[-1]
-
-        # print(len(u_j))
-        # print(len(AFE))
-
-        u_j = u_j[1:mx]
+        M = tri_mat(dias, m_len)
+        print(AFE)
+        print(M)
+        add_v = np.zeros(m_len)
 
         for j in range(0, mt):
+
             add_v[0] = p(t[j])
             add_v[-1] = q(t[j])
-            add_v_l = add_v * lmbda
-            print(type(AFE))
-            u_jp1 = np.dot(AFE, u_j + add_v_l)
-            # u_j = np.zeros(mx + 1)
-            # u_j[1:-1] = u_jp1[:]
-            # u_j[0] = add_v[0]
-            # u_j[-1] = add_v[-1]
-            u_j = u_jp1
 
-        # u_jj = np.zeros(mx+1)
-        # print(len(u_jj))
-        # print(len(u_jp1))
-        # u_jj[1:mx] = u_j
-        # u_jj[0] = p(t[j])
-        # u_jj[-1] = q(t[j])
-        # u_j = u_jj
-        u_j[0] = p(t[j])
-        u_j[-1] = q(t[j])
+            add_v_l = add_v * lmbda
+            u_jp1 = np.dot(AFE, u_j[1:-1]) + add_v_l
+
+            u_j[1:-1] = u_jp1
+
+            u_j[0] = add_v[0]
+            u_j[-1] = add_v[-1]
 
     if bc == 'neumann':
 
+        m_len = mx + 1
         diag = [[lmbda] * mx, [1 - 2 * lmbda] * (mx + 1), [lmbda] * mx]
         AFE = ssp.diags(diag, [-1, 0, 1]).toarray()
+        M = tri_mat(dias, m_len)
         AFE[0, 1] = 2 * lmbda
         AFE[mx, mx - 1] = 2 * lmbda
-
+        M[0, 1] = 2 * lmbda
+        M[mx, mx - 1] = 2 * lmbda
+        print(AFE)
+        print(M)
         add_v = np.zeros(mx + 1)
-
         for j in range(0, mt):
+
             add_v[0] = -p(t[j])
             add_v[-1] = q(t[j])
 
             add_v_l = 2 * add_v * lmbda * deltax
 
-            u_j = np.dot(AFE, u_j + add_v_l)
+            u_j = np.dot(AFE, u_j) + add_v_l
+
+            # print(u_j)
 
             # u_j[0] = -add_v[0]
             # u_j[-1] = add_v[-1]
@@ -110,16 +105,20 @@ def forward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
 
         diag = [[lmbda] * (mx - 1), [1 - 2 * lmbda] * mx, [lmbda] * (mx - 1)]
         AFE = ssp.diags(diag, [-1, 0, 1]).toarray()
+        M = tri_mat(dias, mx)
         AFE[0, mx - 1] = lmbda
         AFE[mx - 1, 0] = lmbda
-
+        M[0, mx - 1] = lmbda
+        M[mx - 1, 0] = lmbda
+        print(AFE)
+        print(M)
         for j in range(0, mt):
 
             u_jp1 = np.dot(AFE, u_j)
             u_j = u_jp1
 
-            u_j[0] = p(t[j])
-            u_j[-1] = q(t[j])
+            # u_j[0] = p(t[j])
+            # u_j[-1] = q(t[j])
 
     if bc == 'homogenous':
 
@@ -143,7 +142,7 @@ def forward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
         u_jj[0] = 0
         u_jj[-1] = 0
         u_j = u_jj
-
+    print(u_j)
     return u_j
 
 
@@ -172,7 +171,7 @@ def backward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
             add_v[0] = p(t[j])
             add_v[-1] = q(t[j])
             add_v_l = add_v * lmbda
-            u_jp1 = spsolve(ABE, u_j[1:mx] + add_v_l)
+            u_jp1 = spsolve(ABE, u_j[1:mx]) + add_v_l
 
             u_j = np.zeros(mx + 1)
             u_j[1:-1] = u_jp1[:]
@@ -254,7 +253,7 @@ def crank_nicholson(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
             add_v[0] = p(t[j])
             add_v[-1] = q(t[j])
             add_v_l = add_v * lmbda
-            u_jp1 = spsolve(A_CN, B_CN*u_j[1:mx] + add_v_l)
+            u_jp1 = spsolve(A_CN, B_CN*u_j[1:mx]) + add_v_l
 
             u_j = np.zeros(mx + 1)
             u_j[1:-1] = u_jp1[:]
@@ -278,13 +277,16 @@ def crank_nicholson(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
 
         add_v = np.zeros(mx + 1)
 
+        print(u_j)
+
         for j in range(0, mt):
             add_v[0] = -p(t[j])
             add_v[-1] = q(t[j])
 
             add_v_l = 2 * add_v * lmbda * deltax
 
-            u_j = spsolve(A_CN, (B_CN*u_j + add_v_l))
+            u_j = spsolve(A_CN, (B_CN*u_j)) + add_v_l
+            # print(u_j)
 
             # u_j = np.zeros(mx + 1)
             # u_j[1:-1] = u_jp1[:]
@@ -347,7 +349,7 @@ def solve_pde(U0, mx, mt, method, bc, p, q, args):
             x = np.linspace(0, L, mx)  # mesh points in space
             pl.plot(x, u_j, 'ro', label='num')
             xx = np.linspace(0, L, 250)
-            # pl.plot(xx, u_exact(xx, T), 'b-', label='exact')
+            pl.plot(xx, u_exact(xx, T), 'b-', label='exact')
             pl.xlabel('x')
             pl.ylabel('u(x,0.5)')
             pl.legend(loc='upper right')
@@ -375,7 +377,7 @@ def solve_pde(U0, mx, mt, method, bc, p, q, args):
     lmbda = kappa * deltat / (deltax ** 2)  # mesh fourier number
     # print("deltax=", deltax)
     # print("deltat=", deltat)
-    # print("lambda=", lmbda)
+    print("lambda=", lmbda)
 
     # Set up the solution variables
     # u_j = np.zeros(x.size)  # u at current time step
@@ -406,8 +408,9 @@ def solve_pde(U0, mx, mt, method, bc, p, q, args):
         u_j = backward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t)
     if method == 'CN':
         u_j = crank_nicholson(u_j, lmbda, bc, p, q, deltax, mx, mt, t)
-
-    # results_plot(x, u_j, bc, mx, mt, T)
+    x = np.linspace(0, L, mx - 1)  # mesh points in space
+    print(T)
+    results_plot(x, u_j, bc, mx, mt, T)
 
     return u_j
 
@@ -446,13 +449,13 @@ if __name__ == '__main__':
 
     # Set problem parameters/functions
     kappa = 1.0  # diffusion constant
-    L = 2.0  # length of spatial domain
+    L = 1.0  # length of spatial domain
     T = 0.5  # total time to solve for
 
-    args = [1, 1, 0.7]
+    args = [1, 1, 0.5]
 
     # Set numerical parameters
-    mx = 25  # number of gridpoints in space
+    mx = 5  # number of gridpoints in space
     mt = 1000  # number of gridpoints in time
 
     # uf = solve_pde(None, mx, mt, 'CN', 'neumann', p, q, args)
@@ -460,10 +463,10 @@ if __name__ == '__main__':
     # pl.plot(x, uf, 'ro')
     # pl.show()
 
-    fe = solve_pde(None, mx, mt, 'FE', 'dirichlet', p, q, args)
-    x = np.linspace(0, L, mx - 1)
-    pl.plot(x, fe, 'ro')
-    pl.show()
+    fe = solve_pde(None, mx, mt, 'FE', 'periodic', p, q, args)
+    # x = np.linspace(0, args[1], mx + 1)
+    # pl.plot(x, fe, 'ro')
+    # pl.show()
 
     # u_FE = solve_pde(None, mx, mt, 'FE', 'dirichlet', p, q, args)
     # u_BE = solve_pde(None, mx, mt, 'BE', 'dirichlet', p, q, args)
