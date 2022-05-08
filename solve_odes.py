@@ -160,6 +160,20 @@ def solve_ode(x0, t0, t1, eqs, method, deltat_max, *args):
     except ValueError:
         raise ValueError('Given delta t wrong type')
 
+    try:
+        is_fun = str(eqs)[1]
+        if is_fun == 'f':
+            try:
+                sol1 = eqs(x0, t0, *args)
+                if len(sol1) != len(x0):
+                    raise IndexError('Unsuitable initial condition dimensions')
+            except TypeError:
+                raise TypeError('Unsuitable initial conditions dimensions')
+        else:
+            raise TypeError('Given ode(s) not a function')
+    except (IndexError, TypeError):
+        raise TypeError('Given ode(s) not a function')
+
     # if args:
     #     pass
     # else:
@@ -228,9 +242,9 @@ if __name__ == '__main__':
 
     # Initial Conditions f2
     t0 = 0
-    t1 = 100
+    t1 = 5
     x0 = 1, 1
-    deltat_maxx = 0.01
+    deltat_maxx = 1
     f2_sol = solve_ode(x0, t0, t1, f2, 'runge', deltat_maxx)
     f2_sol_eul = solve_ode(x0, t0, t1, f2, 'euler', deltat_maxx)
     x = []
@@ -254,8 +268,49 @@ if __name__ == '__main__':
     plt.legend()
     plt.show()
 
+    # error plots for runge and euler methods for dxdt = x
+
+    def error_graph(x, time, time1, fun):
+
+        h_value_list = np.logspace(-4, 0, 50)
+        true_x = f_true(time1)
+
+        error_list_eul = np.zeros(int(len(h_value_list)))
+        error_list_run = np.zeros(int(len(h_value_list)))
+
+        for i in range(len(h_value_list)):
+            eul_sol = solve_ode(x, time, time1, fun, 'euler', h_value_list[i])
+            final = eul_sol[-1]
+            err = abs(final - true_x)
+            error_list_eul[i] = err
+
+        for i in range(len(h_value_list)):
+            run_sol = solve_ode(x, time, time1, fun, 'runge', h_value_list[i])
+            final = run_sol[-1]
+            err = abs(final - true_x)
+            error_list_run[i] = err
+
+        ax = plt.gca()
+        ax.scatter(h_value_list, error_list_eul, label='Euler')
+        ax.scatter(h_value_list, error_list_run, label='RK4')
+        ax.set_yscale('log')
+        ax.set_xscale('log')
+        plt.xlabel('delta t')
+        plt.ylabel('Error')
+        plt.legend()
+        plt.show()
+
+        return error_list_eul, error_list_eul
+
+    x0 = 1
+    t0 = 0
+    t1 = 1
+    eul_err, run_err = error_graph(x0, t0, t1, f)
+
     # timing euler and runge for similar error
 
+    x0 = 1, 1
+    t0 = 0
     t1 = 1
 
     start_t = time.time()

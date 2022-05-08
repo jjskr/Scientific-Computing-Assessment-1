@@ -32,6 +32,7 @@ def code_testing_solve_ode():
     tests_failed = []
 
     # test initial conditions dimensions
+
     try:
         solve_ode(long_x0_f, suitable_t0, suitable_t1, f, suitable_method, suitable_dt)
         tests_failed = tests_failed + ['unsuitable initial condition dimensions']

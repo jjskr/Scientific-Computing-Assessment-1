@@ -104,6 +104,7 @@ def hopf_3(U0, t, args):
 
 
 def test_shooting_solutions(U0, ode, f_true_sol, args):
+
     """
     Function to test for correct solve_ode values for 2D and 3D ODEs
     :param U0: initial conditions
@@ -120,12 +121,17 @@ def test_shooting_solutions(U0, ode, f_true_sol, args):
 
     X0, T = orb_sol[:-1], orb_sol[-1]
 
+    # checks correct period is found
     if T - 2*math.pi > 10**-8:
         test_status = 1
-    else:
-        test_status = 0
 
     x_vals = solve_ode(X0, 0, T, ode, 'runge', 0.01, args)
+
+    # checks start is equal to finish
+    for i in range(len(x_vals[0])):
+        errorr = x_vals[0][i] - x_vals[-1][i]
+        if errorr > 10**-8:
+            test_status = 1
 
     t_array = []
     t_array = t_array + [0]
@@ -136,6 +142,7 @@ def test_shooting_solutions(U0, ode, f_true_sol, args):
     if current_t != T:
         t_array = t_array + [T]
 
+    # checking solve_ode produces correct values
     actual = []
     for i in range(0, len(t_array)):
         t = t_array[i]
@@ -231,35 +238,30 @@ if __name__ == '__main__':
     # doesnt work as explicit solution contains square roots, so as beta falls below 0 explicit
     # solution fails to compute
 
-    U0 = 1.4, 0, 6.3
-    pmin = 2
-    pmax = -1
-    pstep = 20
-
-    par_list, solutions = nat_continuation(hopfn, U0, pmin, pmax, pstep, pc_stable_0, shooting)
-    print(par_list)
-    print(solutions)
-    t_list = []
-    exact_sols = []
-    j = 0
-    for i in solutions:
-        t = i[-1]
-        args = [par_list[j], 0]
-        exact_sol = true_sol(t, args)
-        exact_sols = exact_sols + [exact_sol]
-        j += 1
-    print(exact_sols)
-    error = 0
-    for i in range(len(exact_sols)):
-        error1 = abs(solutions[i][0] - exact_sols[i][0])
-        error2 = abs(solutions[i][1] - exact_sols[i][1])
-        if error1 > 10**-5:
-            error = 1
-        elif error2 > 10**-5:
-            error = 1
-    print(error)
-    # true_sols = []
-    # for i in par_list:
-    #     args = [i, 0]
-    #     true_sols = true_sols + [true_sol(t, i)]
-    # print(true_sols)
+    # U0 = 1.4, 0, 6.3
+    # pmin = 2
+    # pmax = -1
+    # pstep = 20
+    #
+    # par_list, solutions = nat_continuation(hopfn, U0, pmin, pmax, pstep, pc_stable_0, shooting)
+    # print(par_list)
+    # print(solutions)
+    # t_list = []
+    # exact_sols = []
+    # j = 0
+    # for i in solutions:
+    #     t = i[-1]
+    #     args = [par_list[j], 0]
+    #     exact_sol = true_sol(t, args)
+    #     exact_sols = exact_sols + [exact_sol]
+    #     j += 1
+    # print(exact_sols)
+    # error = 0
+    # for i in range(len(exact_sols)):
+    #     error1 = abs(solutions[i][0] - exact_sols[i][0])
+    #     error2 = abs(solutions[i][1] - exact_sols[i][1])
+    #     if error1 > 10**-5:
+    #         error = 1
+    #     elif error2 > 10**-5:
+    #         error = 1
+    # print(error)
