@@ -27,7 +27,12 @@ def q(t):
 
 
 def tri_mat(dias, m_len):
-
+    """
+    Function returns tridiagonal matrix for chosen method anc boundary condition
+    :param dias: for matrix diagonals
+    :param m_len: length of matrix
+    :return: tridiagonal matrix to use to caculate finite difference
+    """
     diags = [[dias[0]] * (m_len - 1), [dias[1]] * m_len, [dias[2]] * (m_len - 1)]
     M = ssp.diags(diags, [-1, 0, 1]).toarray()
 
@@ -324,7 +329,19 @@ def crank_nicholson(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
     return u_j
 
 
-def solve_pde(U0, mx, mt, method, bc, p, q, args):
+def solve_pde(mx, mt, method, bc, p, q, args):
+    """
+    Function initiates the problem and variables, passing them to functions to solve with method desired
+    :param U0: initial conditions
+    :param mx: number of grid points in space
+    :param mt: number of grid points in time
+    :param method: desired method to use - FE, BE or CN
+    :param bc: boundary type - dirichlet, neumann or periodic
+    :param p: left boundary condition
+    :param q: right boundary condition
+    :param args: additional arguments to pass, kappa, length and time to solve for
+    :return: state of pde at time = T
+    """
 
     # kappa = 1.0  # diffusion constant
     # L = 1.0  # length of spatial domain
@@ -383,27 +400,14 @@ def solve_pde(U0, mx, mt, method, bc, p, q, args):
     print("lambda=", lmbda)
 
     # Set up the solution variables
-    # u_j = np.zeros(x.size)  # u at current time step
-    # # Set initial condition
-    # if bc == 'periodic':
-    #     for i in range(0, mx):
-    #         u_j[i] = u_initial(x[i])
-    # else:
-    #     for i in range(0, mx + 1):
-    #         u_j[i] = u_initial(x[i])
-
-    if U0 is not None:
-        u_j = U0
+    u_j = np.zeros(x.size)  # u at current time step
+    # Set initial condition
+    if bc == 'periodic':
+        for i in range(0, mx):
+            u_j[i] = u_initial(x[i])
     else:
-        # Set up the solution variables
-        u_j = np.zeros(x.size)  # u at current time step
-        # Set initial condition
-        if bc == 'periodic':
-            for i in range(0, mx):
-                u_j[i] = u_initial(x[i])
-        else:
-            for i in range(0, mx + 1):
-                u_j[i] = u_initial(x[i])
+        for i in range(0, mx + 1):
+            u_j[i] = u_initial(x[i])
 
     if method == 'FE':
         u_j = forward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t)
@@ -458,22 +462,22 @@ if __name__ == '__main__':
     args = [1, 1, 0.5]
 
     # Set numerical parameters
-    mx = 5  # number of gridpoints in space
+    mx = 25  # number of gridpoints in space
     mt = 1000  # number of gridpoints in time
 
-    # uf = solve_pde(None, mx, mt, 'CN', 'neumann', p, q, args)
+    # uf = solve_pde(mx, mt, 'CN', 'neumann', p, q, args)
     # x = np.linspace(0, L, mx + 1)
     # pl.plot(x, uf, 'ro')
     # pl.show()
 
-    fe = solve_pde(None, mx, mt, 'CN', 'periodic', p, q, args)
+    fe = solve_pde(mx, mt, 'FE', 'dirichlet', p, q, args)
     # x = np.linspace(0, args[1], mx + 1)
     # pl.plot(x, fe, 'ro')
     # pl.show()
 
-    # u_FE = solve_pde(None, mx, mt, 'FE', 'dirichlet', p, q, args)
-    # u_BE = solve_pde(None, mx, mt, 'BE', 'dirichlet', p, q, args)
-    # u_CN = solve_pde(None, mx, mt, 'CN', 'dirichlet', p, q, args)
+    # u_FE = solve_pde(mx, mt, 'FE', 'dirichlet', p, q, args)
+    # u_BE = solve_pde(mx, mt, 'BE', 'dirichlet', p, q, args)
+    # u_CN = solve_pde(mx, mt, 'CN', 'dirichlet', p, q, args)
     #
     # x = np.linspace(0, L, mx + 1)
     # t = np.linspace(0, T, mt + 1)  # mesh points in time
@@ -492,9 +496,9 @@ if __name__ == '__main__':
     # t = np.linspace(0, T, mt + 1)  # mesh points in time
     # xx = np.linspace(0, L, 250)
     #
-    # g_FE = solve_pde(None, mx, mt, 'FE', 'dirichlet', p, q, args)
-    # g_BE = solve_pde(None, mx, mt, 'BE', 'dirichlet', p, q, args)
-    # g_CN = solve_pde(None, mx, mt, 'CN', 'dirichlet', p, q, args)
+    # g_FE = solve_pde(mx, mt, 'FE', 'dirichlet', p, q, args)
+    # g_BE = solve_pde(mx, mt, 'BE', 'dirichlet', p, q, args)
+    # g_CN = solve_pde(mx, mt, 'CN', 'dirichlet', p, q, args)
     #
     # fig, (ax1, ax2) = pl.subplots(1, 2, sharey=True)
     # ax1.plot(x, u_FE, 'ro', label='FE')
