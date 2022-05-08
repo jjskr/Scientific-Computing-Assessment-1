@@ -58,56 +58,39 @@ def forward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
     if bc == 'dirichlet':
 
         m_len = mx-1
-
         M = tri_mat(dias, m_len)
-
         add_v = np.zeros(m_len)
 
         for j in range(0, mt):
 
             add_v[0], add_v[-1] = p(t[j]), q(t[j])
-
             add_v_l = add_v * lmbda
             u_jp1 = np.dot(M, u_j[1:-1]) + add_v_l
-
             u_j[1:-1] = u_jp1
-
             u_j[0], u_j[-1] = add_v[0], add_v[-1]
 
     if bc == 'neumann':
 
         m_len = mx + 1
-
         M = tri_mat(dias, m_len)
-
         M[0, 1], M[mx, mx - 1] = 2 * lmbda, 2 * lmbda
-
         add_v = np.zeros(mx + 1)
 
         for j in range(0, mt):
 
             add_v[0], add_v[-1] = -p(t[j]), q(t[j])
-
             add_v_l = 2 * add_v * lmbda * deltax
-
             u_j = np.dot(M, u_j) + add_v_l
-
-            # u_j[0] = -add_v[0]
-            # u_j[-1] = add_v[-1]
 
     if bc == 'periodic':
 
         M = tri_mat(dias, mx)
-
-        M[0, mx - 1], M[mx-1, 0] = lmbda, lmbda
+        M[0, mx - 1], M[mx - 1, 0] = lmbda, lmbda
 
         for j in range(0, mt):
 
             u_jp1 = np.dot(M, u_j)
             u_j = u_jp1
-
-            # u_j[0] = p(t[j])
-            # u_j[-1] = q(t[j])
 
     return u_j
 
@@ -133,54 +116,39 @@ def backward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
 
         m_len = mx - 1
         M = tri_mat(dias, m_len)
-
         add_v = np.zeros(mx - 1)
 
         for j in range(0, mt):
 
             add_v[0], add_v[-1] = p(t[j]), q(t[j])
             add_v_l = add_v * lmbda
-
             u_jp1 = spsolve(M, u_j[1:mx]) + add_v_l
-
             u_j = np.zeros(mx + 1)
             u_j[1:-1] = u_jp1[:]
-
             u_j[0], u_j[-1] = add_v[0], add_v[-1]
 
     if bc == 'neumann':
 
         m_len = mx + 1
-
         M = tri_mat(dias, m_len)
-
         M[0, 1], M[mx, mx - 1] = 2 * lmbda, 2 * lmbda
-
         add_v = np.zeros(mx + 1)
 
         for j in range(0, mt):
 
             add_v[0], add_v[-1] = -p(t[j]), q(t[j])
-
             add_v_l = 2 * add_v * lmbda * deltax
-
             u_j = spsolve(M, u_j + add_v_l)
-
-            # u_j[0] = -add_v[0]
-            # u_j[-1] = add_v[-1]
 
     if bc == 'periodic':
 
         M = tri_mat(dias, mx)
-
         M[0, mx - 1], M[mx - 1, 0] = lmbda, lmbda
 
         for j in range(0, mt):
 
             u_jp1 = spsolve(M, u_j)
             u_j = u_jp1
-
-            # u_j[0], u_j[-1] = p(t[j]), q(t[j])
 
     return u_j
 
@@ -206,18 +174,14 @@ def crank_nicholson(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
     if bc == 'dirichlet':
 
         m_len = mx - 1
-
         MA, MB = ssp.csr_matrix(tri_mat(dia1, m_len)), ssp.csr_matrix(tri_mat(dia2, m_len))
-
         add_v = np.zeros(mx - 1)
 
         for j in range(0, mt):
 
             add_v[0], add_v[-1] = p(t[j]), q(t[j])
-
             add_v_l = add_v * lmbda
             u_jp1 = spsolve(MA, MB*u_j[1:mx]) + add_v_l
-
             u_j = np.zeros(mx + 1)
             u_j[1:-1] = u_jp1[:]
             u_j[0] = add_v[0]
@@ -226,37 +190,30 @@ def crank_nicholson(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
     if bc == 'neumann':
 
         m_len = mx + 1
-
         MA, MB = tri_mat(dia1, m_len), tri_mat(dia2, m_len)
-
         MA[0, 1], MA[mx, mx-1], MB[0, 1], MB[mx, mx-1] = 2 * lmbda, 2 * lmbda, 2 * lmbda, 2 * lmbda
-
         MA, MB = ssp.csr_matrix(MA), ssp.csr_matrix(MB)
-
         add_v = np.zeros(mx + 1)
 
         for j in range(0, mt):
 
             add_v[0], add_v[-1] = -p(t[j]), q(t[j])
-
             add_v_l = 2 * add_v * lmbda * deltax
-
             u_j = spsolve(MA, (MB*u_j)) + add_v_l
+
+            u_j[0] = -add_v[0]
+            u_j[-1] = add_v[-1]
 
     if bc == 'periodic':
 
         MA, MB = tri_mat(dia1, mx), tri_mat(dia2, mx)
-
         MA[0, mx - 1], MA[mx - 1, 0], MB[0, mx - 1], MB[mx - 1, 0] = lmbda, lmbda, lmbda, lmbda
-
         MA, MB = ssp.csr_matrix(MA), ssp.csr_matrix(MB)
 
         for j in range(0, mt):
 
             u_jp1 = spsolve(MA, MB*u_j)
             u_j = u_jp1
-
-            # u_j[0], u_j[-1] = p(t[j]), q(t[j])
 
     return u_j
 
@@ -274,9 +231,6 @@ def solve_pde(mx, mt, method, bc, p, q, plot, args):
     :return: state of pde at time = T
     """
 
-    # kappa = 1.0  # diffusion constant
-    # L = 1.0  # length of spatial domain
-    # T = 0.1  # total time to solve for
     kappa = args[0]
     L = args[1]
     T = args[2]
@@ -324,9 +278,6 @@ def solve_pde(mx, mt, method, bc, p, q, plot, args):
     deltax = x[1] - x[0]  # gridspacing in x
     deltat = t[1] - t[0]  # gridspacing in t
     lmbda = kappa * deltat / (deltax ** 2)  # mesh fourier number
-    # print("deltax=", deltax)
-    # print("deltat=", deltat)
-    print("lambda=", lmbda)
 
     # Set up the solution variables
     u_j = np.zeros(x.size)  # u at current time step
@@ -344,7 +295,6 @@ def solve_pde(mx, mt, method, bc, p, q, plot, args):
         u_j = backward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t)
     if method == 'CN':
         u_j = crank_nicholson(u_j, lmbda, bc, p, q, deltax, mx, mt, t)
-    x = np.linspace(0, L, mx - 1)  # mesh points in space
 
     if plot:
         results_plot(x, u_j, bc, mx, mt, T)
@@ -368,7 +318,7 @@ if __name__ == '__main__':
     args = [1, 1, 0.5]
 
     # Set numerical parameters
-    mx = 10  # number of gridpoints in space
+    mx = 30  # number of gridpoints in space
     mt = 1000  # number of gridpoints in time
 
     # uf = solve_pde(mx, mt, 'CN', 'neumann', p, q, args)
@@ -376,72 +326,76 @@ if __name__ == '__main__':
     # pl.plot(x, uf, 'ro')
     # pl.show()
 
-    fe = solve_pde(mx, mt, 'CN', 'periodic', p, q, True, args)
+    # fe = solve_pde(mx, mt, 'BE', 'periodic', p, q, True, args)
     # x = np.linspace(0, args[1], mx + 1)
     # pl.plot(x, fe, 'ro')
     # pl.show()
 
-    # u_FE = solve_pde(mx, mt, 'FE', 'dirichlet', p, q, args)
-    # u_BE = solve_pde(mx, mt, 'BE', 'dirichlet', p, q, args)
-    # u_CN = solve_pde(mx, mt, 'CN', 'dirichlet', p, q, args)
-    #
-    # x = np.linspace(0, L, mx + 1)
-    # t = np.linspace(0, T, mt + 1)  # mesh points in time
-    # xx = np.linspace(0, L, 250)
+    solve_pde(mx, mt, 'FE', 'neumann', p, q, True, args)
 
-    # pl.plot(x, u_FE, 'ro', label='FE')
-    # pl.plot(x, u_BE, 'bo', label='BE')
-    # pl.plot(x, u_CN, 'ko', label='CN')
-    # pl.plot(xx, u_exact(xx, T), label='Exact')
-    # pl.legend()
-    # pl.show()
+    # plot comparing accuracy of each method
 
-    # mx = 15
-    #
-    # x1 = np.linspace(0, L, mx + 1)
-    # t = np.linspace(0, T, mt + 1)  # mesh points in time
-    # xx = np.linspace(0, L, 250)
-    #
-    # g_FE = solve_pde(mx, mt, 'FE', 'dirichlet', p, q, args)
-    # g_BE = solve_pde(mx, mt, 'BE', 'dirichlet', p, q, args)
-    # g_CN = solve_pde(mx, mt, 'CN', 'dirichlet', p, q, args)
-    #
-    # fig, (ax1, ax2) = pl.subplots(1, 2, sharey=True)
-    # ax1.plot(x, u_FE, 'ro', label='FE')
-    # ax1.plot(x, u_BE, 'bo', label='BE')
-    # ax1.plot(x, u_CN, 'ko', label='CN')
-    # ax1.plot(xx, u_exact(xx, T), label='Exact')
-    # ax1.set_title('lambda = 0.44')
-    # ax1.legend()
-    # ax2.plot(x1, g_FE, 'ro', label='FE')
-    # ax2.plot(x1, g_BE, 'bo', label='BE')
-    # ax2.plot(x1, g_CN, 'ko', label='CN')
-    # ax2.plot(xx, u_exact(xx, T), label='Exact')
-    # ax2.set_title('lambda = 0.16')
-    # ax2.legend()
-    # pl.show()
-    # cn - weird results for periodic
-    # be - weird for periodic and neumann
+    u_FE = solve_pde(mx, mt, 'FE', 'dirichlet', p, q, False, args)
+    u_BE = solve_pde(mx, mt, 'BE', 'dirichlet', p, q, False, args)
+    u_CN = solve_pde(mx, mt, 'CN', 'dirichlet', p, q, False, args)
 
-    # sort periodic for be and cn
+    x = np.linspace(0, L, mx + 1)
+    t = np.linspace(0, T, mt + 1)  # mesh points in time
+    xx = np.linspace(0, L, 250)
 
-    # def u_exact(x, t, p):
-    #     # the exact solution
-    #     y = np.exp(-kappa * (pi ** 2 / L ** 2) * t) * np.sin(pi * x / L) ** p
-    #     return y
-    # y_list = []
-    # labels = []
-    #
-    # x = np.linspace(0, L, 100)  # mesh points in space
-    # for i in range(1, 10):
-    #     y_list = y_list + [u_exact(x, 0.1, i)]
-    #     labels = labels + ['p = ' + str(i)]
-    # for i in range(len(y_list)):
-    #     pl.plot(x, y_list[i], label=labels[i])
-    # pl.xlabel('u(x,0.5)')
-    # pl.ylabel('x')
-    # pl.legend()
-    # pl.show()
+    pl.plot(x, u_FE, 'ro', label='FE')
+    pl.plot(x, u_BE, 'bo', label='BE')
+    pl.plot(x, u_CN, 'ko', label='CN')
+    pl.plot(xx, u_exact(xx, T), label='Exact')
+    pl.legend()
+    pl.show()
+
+    # plot showing how lambda changes the accuracy of each method
+
+    mx = 10
+
+    x1 = np.linspace(0, L, mx + 1)
+    t = np.linspace(0, T, mt + 1)  # mesh points in time
+    xx = np.linspace(0, L, 250)
+
+    g_FE = solve_pde(mx, mt, 'FE', 'dirichlet', p, q, False, args)
+    g_BE = solve_pde(mx, mt, 'BE', 'dirichlet', p, q, False, args)
+    g_CN = solve_pde(mx, mt, 'CN', 'dirichlet', p, q, False, args)
+
+    fig, (ax1, ax2) = pl.subplots(1, 2, sharey=True)
+    ax1.plot(x, u_FE, 'ro', label='FE')
+    ax1.plot(x, u_BE, 'bo', label='BE')
+    ax1.plot(x, u_CN, 'ko', label='CN')
+    ax1.plot(xx, u_exact(xx, T), label='Exact')
+    ax1.set_title('lambda = 0.45')
+    ax1.legend()
+    ax2.plot(x1, g_FE, 'ro', label='FE')
+    ax2.plot(x1, g_BE, 'bo', label='BE')
+    ax2.plot(x1, g_CN, 'ko', label='CN')
+    ax2.plot(xx, u_exact(xx, T), label='Exact')
+    ax2.set_title('lambda = 0.05')
+    ax2.legend()
+    pl.show()
+
+    # plot showing how distribution changes with p
+
+    def u_exact(x, t, p):
+        # the exact solution
+        y = np.exp(-kappa * (pi ** 2 / L ** 2) * t) * np.sin(pi * x / L) ** p
+        return y
+    y_list = []
+    labels = []
+
+    x = np.linspace(0, L, 100)  # mesh points in space
+    for i in range(1, 10):
+        y_list = y_list + [u_exact(x, 0.1, i)]
+        labels = labels + ['p = ' + str(i)]
+    for i in range(len(y_list)):
+        pl.plot(x, y_list[i], label=labels[i])
+    pl.xlabel('u(x,0.5)')
+    pl.ylabel('x')
+    pl.legend()
+    pl.show()
 
 
 # CN - dirichlet

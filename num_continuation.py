@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pde_solving import solve_pde
 from math import pi
+import warnings
+
+warnings.filterwarnings('ignore')
 
 
 def pc_stable_0(U0, T, ode, args):
@@ -102,6 +105,7 @@ def nat_continuation(ode, U0, par_min, par_max, par_split, pc, discretisation, s
         U0 = solver(discretisation(ode), U0, args)
         U0 = np.round(U0, rou)
         solut_list = solut_list + [U0]
+
     return params, solut_list
 
 
@@ -139,8 +143,6 @@ def psuedo_continuation(ode, U0, par_min, par_max, par_split, discretisation, so
 
     param_l = [par0, par1]
 
-    print(param_l)
-
     if discretisation == shooting:
             par0 = [pc_stable_0, par0]
             par1 = [pc_stable_0, par1]
@@ -148,11 +150,7 @@ def psuedo_continuation(ode, U0, par_min, par_max, par_split, discretisation, so
     val0 = fsolve(discretisation(ode), U0, args=par0)
     val1 = fsolve(discretisation(ode), val0, args=par1)
 
-    print(val0, val1)
-
     sol_lis = [val0[0], val1[0]]
-
-    print(sol_lis)
 
     i = 0
 
@@ -171,16 +169,10 @@ def psuedo_continuation(ode, U0, par_min, par_max, par_split, discretisation, so
 
         pred_ar = np.array(pred_ar)
 
-        if discretisation == shooting:
-            sol = solver(lambda cur_s: np.append(discretisation(ode)(cur_s[:-1], [pc_stable_0, p_upd(cur_s[-1])]), np.dot(cur_s[:-1] - pred_x, delta_x) + np.dot(cur_s[-1] - pred_p, delta_p)), pred_ar)
-
-        else:
-            sol = solver(lambda cur_s: np.append(discretisation(ode)(cur_s[:-1], p_upd(cur_s[-1])),
+        sol = solver(lambda cur_s: np.append(discretisation(ode)(cur_s[:-1], p_upd(cur_s[-1])),
                                                     np.dot(cur_s[:-1] - pred_x, delta_x) + np.dot(cur_s[-1] - pred_p,
                                                                                                   delta_p)), pred_ar)
-        #sol = solver(lambda cur_s: np.append(discretisation(ode)(cur_s[:-1], p_upd(cur_s[-1])),
-                                             # np.dot(cur_s[:-1] - pred_x, delta_x) + np.dot(cur_s[-1] - pred_p,
-                                             #                                               delta_p)), pred_ar)
+
         sol_add = sol[:-1][0]
         par_add = sol[-1]
         sol_lis = sol_lis + [sol_add]
@@ -281,12 +273,12 @@ def psuedo_continuation_h(ode, U0, par_min, par_max, par_split, discretisation, 
     return sol_lis, param_l
 
 
-def continuation(method, ode, U0, par_min, par_max, par_split, discretisation, solver=fsolve):
+def continuation(method, ode, U0, par_min, par_max, par_split, pc, discretisation, solver=fsolve):
 
     if method == 'pseudo':
         sols, pars = psuedo_continuation(ode, U0, par_min, par_max, par_split, discretisation, solver)
     elif method == 'natural':
-        sols, pars = nat_continuation(ode, U0, par_min, par_max, par_split, discretisation, solver)
+        sols, pars = nat_continuation(ode, U0, par_min, par_max, par_split, pc, discretisation, solver)
 
     return sols, pars
 
@@ -300,20 +292,21 @@ if __name__ == '__main__':
     pmax = -1
     pstep = 100
 
-    sol_l, p_l = psuedo_continuation_h(hopfn, U0, pmin, pmax, pstep, shooting)
-    plt.plot(p_l, sol_l)
-    plt.show()
+    # sol_l, p_l = psuedo_continuation_h(hopfn, U0, pmin, pmax, pstep, shooting)
+    # plt.plot(p_l, sol_l)
+    # plt.show()
 
     # plotting natural continuation and pseudo arc length results for cubic
     # as c varies between -2 and 2
     # # cubic initial conditions
-    # U0 = 1
-    # pmin = -2
-    # pmax = 2
-    # pstep = 100
-    # #
+    U0 = 1
+    pmin = -2
+    pmax = 2
+    pstep = 100
+    #
     # par_list, solutions = nat_continuation(cubic_eq, U0, pmin, pmax, pstep, None, lambda x: x)
-    # plt.plot(par_list, solutions, label='natural parameter')
+    par_list, solutions = continuation('natural', cubic_eq, U0, pmin, pmax, pstep, None, lambda x: x)
+    plt.plot(par_list, solutions, label='natural parameter')
     # #
     U0 = 1
     pmin = -2
@@ -321,78 +314,101 @@ if __name__ == '__main__':
     pstep = 100
 
     # sol_l, p_l = psuedo_continuation(cubic_eq, U0, pmin, pmax, pstep, lambda x: x)
-    # plt.plot(p_l, sol_l, label='pseudo-arclength')
-    # plt.legend()
-    # plt.show()
+    sol_l, p_l = continuation('pseudo', cubic_eq, U0, pmin, pmax, pstep, None, lambda x: x)
+    plt.plot(p_l, sol_l, label='pseudo-arclength')
+    plt.title('Plot showing performance of continuation methods on cubic equation')
+    plt.legend()
+    plt.show()
 
     # # hopf continuation - natural works but could not get pseudo arclength to work
     #
-    # U0 = 1.4, 0, 6.3
-    # pmin = 2
-    # pmax = 0
-    # pstep = 50
-    #
+    U0 = 1.4, 0, 6.3
+    pmin = 2
+    pmax = 0
+    pstep = 50
+
     # par_list, solutions = nat_continuation(hopfn, U0, pmin, pmax, pstep, pc_stable_0, shooting)
-    # plt.plot(par_list, solutions)
-    # plt.show()
+    par_list, solutions = continuation('natural', hopfn, U0, pmin, pmax, pstep, pc_stable_0, shooting)
+    U0_sols = []
+    for i in solutions:
+        U0_sols = U0_sols + [i[0]]
+    plt.plot(par_list, U0_sols)
+    plt.title('Plot showing performance of natural continuation on Hopfield equations')
+    plt.show()
     #
     # # modified hopf plots
     #
-    # pmin = 2
-    # pmax = -1
-    # pstep = 34
-    #
-    # par_list, solutions = nat_continuation(hopfm, U0, pmin, pmax, pstep, pc_stable_0, shooting)
-    # plt.plot(par_list, solutions)
-    # plt.show()
+    pmin = 2
+    pmax = -1
+    pstep = 34
+
+    # par_list_m, solutions_m = nat_continuation(hopfm, U0, pmin, pmax, pstep, pc_stable_0, shooting)
+    par_list_m, solutions_m = continuation('natural', hopfm, U0, pmin, pmax, pstep, pc_stable_0, shooting)
+    U0_sols_m = []
+    for i in solutions_m:
+        U0_sols_m = U0_sols_m + [i[0]]
+    plt.plot(par_list_m, U0_sols_m)
+    plt.title('Plot showing performance of natural continuation on modified Hopfield equations')
+    plt.show()
     #
     # # pde continuation, varying t between 0 and 0.5 with homogeneous boundaries
     #
-    # kappa = 1.0  # diffusion constant
-    # L = 1.0  # length of spatial domain
-    # T = 0.5  # total time to solve for
-    #
-    # mx = 30  # number of gridpoints in space
-    # mt = 1000  # number of gridpoints in time
-    #
-    #
-    # def u_initial(x):
-    #     # initial temperature distribution
-    #     y = np.sin(pi * x / L)
-    #     return y
-    #
-    #
-    # def p(t):
-    #     return 0
-    #
-    #
-    # def q(t):
-    #     return 0
-    #
-    #
-    # def pdef(U0, arg):
-    #
-    #     args = [1, 1, arg]
-    #     u_j = solve_pde(None, mx, mt, 'FE', 'dirichlet', p, q, args)
-    #
-    #
-    #     return u_j
-    #
-    #
-    # def cont_pde(f, U0, args):
-    #     return f(U0, args)
-    #
-    #
-    # param, sols = nat_continuation(pdef, np.ones(mx+1), 0, 0.5, 11, None, lambda x: x, 'cont_pde')
-    # t = np.linspace(0, T, mx + 1)  # mesh points in time
-    #
-    # j = 0
-    #
-    # for i in sols:
-    #     ka = np.round(param[j], 4)
-    #     ka = str(ka)
-    #     plt.plot(t, i, label='T = ' + ka)
-    #     plt.legend()
-    #     j += 1
-    # plt.show()
+    kappa = 1.0  # diffusion constant
+    L = 1.0  # length of spatial domain
+    T = 0.5  # total time to solve for
+
+    mx = 30  # number of gridpoints in space
+    mt = 1000  # number of gridpoints in time
+
+
+    def u_initial(x):
+        # initial temperature distribution
+        y = np.sin(pi * x / L)
+        return y
+
+
+    def p(t):
+        return 0
+
+
+    def q(t):
+        return 0
+
+
+    def pdef(U0, arg):
+        """
+        Function for solver to find root of
+        :param U0: initial conditions (unused)
+        :param arg: time value (can be changed but have to change index of 'arg' in args below)
+                    index: 0 = kappa, 1 = length, 2 = time
+        :return: state of PDE at chosen time
+        """
+
+        args = [1, 1, arg]
+        u_j = solve_pde(mx, mt, 'CN', 'dirichlet', p, q, False, args)
+
+        return u_j
+
+
+    def cont_pde(f, U0, args):
+
+        return f(U0, args)
+
+    U0 = np.ones(mx+1)
+    param, sols = continuation('natural', pdef, U0, 0, 0.5, 11, None, lambda x: x, 'cont_pde')
+    t = np.linspace(0, T, mx + 1)  # mesh points in time
+
+    j = 0
+
+    for i in sols:
+        ka = np.round(param[j], 4)
+        ka = str(ka)
+        plt.plot(t, i, label='T = ' + ka)
+        plt.legend()
+        j += 1
+
+    plt.title('Plot showing the state of the grid as time varies')
+    plt.show()
+
+
     # solve_pde(mx, mt, 'CN', 'dirichlet', p, q, 2)
