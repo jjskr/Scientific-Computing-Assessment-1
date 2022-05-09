@@ -10,29 +10,36 @@ def shooting(ode):
     """
     Uses chosen ODE to set function to solve to find orbit cycle of 2D and 3D systems of ODEs
     :param ode: System of odes
-    :return: Conditions to solve as a function
+    :return: Conditions to solve as a function type
     """
 
-    def conditions(U0, *args):
+    def conditions(U0, pc, *args):
         """
         Function needed to be satisfied to calculate limit cycle
         :param U0: current conditions
         :param args: additional arguments
         :return: conditions to be satisfied for calculating a limit cycle
         """
-
-        pc = args[0]
-        args = args[1:]
-
+        # interpret args
+        # print(U0)
+        # print(pc)
+        # print(args)
+        # pc = args[0]
+        # args = args[1:]
+        # set up initial conditions to pass into solve_ode
         X0, T = U0[:-1], U0[-1]
+        # find runge kutta solutions at T
         sols = solve_ode(X0, 0, T, ode, 'runge', 0.01, *args)
         sol = sols[-1, :]
+        # find current phase condition
         phase_cond = pc(X0, T, ode, *args)
+        # find current period condition
         period_cond = []
         for i in range(len(sol)):
             period_cond = period_cond + [X0[i] - sol[i]]
+        # print('period', period_cond)
 
-        return np.r_[phase_cond, period_cond]
+        return np.r_[period_cond, phase_cond]
 
     return conditions
 
@@ -46,6 +53,7 @@ def orbit(ode, U0, pc, *args):
     :return: Solution of initial conditions and time period of one orbit in the form of an array
     """
 
+    # simple input tests
     try:
         ini_cons = len(U0)
         if ini_cons < 2:
@@ -76,7 +84,8 @@ def orbit(ode, U0, pc, *args):
     except (IndexError, TypeError):
         raise TypeError('Given phase condition not a function')
 
-    sol = fsolve(shooting(ode), U0, args=(pc, *args))
+    # uses fsolve to find root of shooting function
+    sol = fsolve(shooting(ode), U0, (pc, *args))
 
     return sol
 
