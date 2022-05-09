@@ -68,16 +68,6 @@ def code_testing_solve_ode():
         tests_passed = tests_passed + ['unsuitable function type test']
 
 
-    # try:
-    #     ans = solve_ode(long_x0_f, suitable_t0, suitable_t1, f, suitable_method, suitable_dt)
-    #     try:
-    #         list(ans)
-    #         tests_failed = tests_failed + ['args needed/unsuitable initial conditions length test']
-    #     except TypeError:
-    #         tests_passed = tests_passed + ['args needed/unsuitable initial conditions length test']
-    # except (IndexError, TypeError):
-    #     tests_passed = tests_passed + ['args needed/unsuitable initial conditions length test']
-
     # test method type
     try:
         solve_ode(suitable_x0, suitable_t0, suitable_t1, f, unsuitable_method, suitable_dt)
@@ -125,7 +115,7 @@ def code_testing_orbit_function():
     except TypeError:
         tests_passed = tests_passed + ['unsuitable ode test']
 
-    # test
+    # testing initial conditions type
     try:
         orbit(suitable_ode, unsuitable_U0, suitable_pc, suitable_args)
         tests_failed = tests_failed + ['unsuitable initial conditions test']
@@ -138,114 +128,7 @@ def code_testing_orbit_function():
     except TypeError:
         tests_passed = tests_passed + ['unsuitable phase condition test']
 
-    # try:
-    #     orbit(suitable_ode, unsuitable_U0_L, suitable_pc, suitable_args)
-    #     tests_failed = tests_failed + ['uunsuitable initial condition dimensions']
-    # except IndexError:
-    #     tests_passed = tests_passed + ['unsuitable initial condition dimensions']
-
     return tests_failed, tests_passed
-
-
-def test_input_orbit_shooting(ode, U0, pc, *args):
-    """
-    Function to test my input into my orbit function
-    :param ode: ODE(s) to solve for
-    :param U0: initial conditions (including time)
-    :param args: additional arguments to pass to ODE(s)
-    :return: nothing if tests pass, error message if test fails
-    """
-
-    try:
-        ini_cons = len(U0)
-    except TypeError:
-        raise TypeError('Initial conditions wrong type')
-
-    if ini_cons < 1:
-        raise IndexError('Initial conditions too short')
-    else:
-        u0, t0 = U0[:-1], U0[-1]
-
-    try:
-        is_fun = str(ode)[1]
-        if is_fun == 'f':
-            pass
-        else:
-            raise TypeError('Given ode(s) not a function')
-    except (IndexError, TypeError):
-        raise TypeError('Given ode(s) not a function')
-
-    try:
-        is_fun = str(pc)[1]
-        if is_fun == 'f':
-            pass
-        else:
-            raise TypeError('Given phase condition not a function')
-    except (IndexError, TypeError):
-        raise TypeError('Given phase condition not a function')
-
-    try:
-        ode(u0, t0, *args)
-        print('ode solves for initial conditions')
-    except IndexError:
-        print('args not suitable')
-        return
-    except TypeError:
-        print('extra initial condition/args needed')
-        return
-    except ValueError:
-        print('more initial conditions needed')
-
-    try:
-        is_fun = str(shooting)[1]
-        if is_fun == 'f':
-            pass
-    except (IndexError, TypeError):
-        print('shooting method not a function')
-        return
-
-    if args:
-        args = (pc, *args)
-        sol = fsolve(shooting(ode), U0, args)
-    else:
-        sol = fsolve(shooting(ode), U0, pc)
-    print(sol, 'sol')
-
-
-def test_input_solve_ode(x0, t0, t1, eqs, method, deltat_max, *args):
-    """
-    Function used to test inputs to solve odes
-    :param x0: initial conditions
-    :param t0: initial time
-    :param t1: final time
-    :param eqs: ODE(s) to solve
-    :param method: step method to use
-    :param deltat_max: max step size
-    :param args: additional arguments needed by ODE(s)
-    :return: nothing if tests pass, message if a test fails
-    """
-
-    if args:
-        args = args[0]
-        print(args)
-        try:
-            eqs(x0, t0, args)
-            print('args suitable')
-
-        except (TypeError, IndexError):
-            print('args not suitable')
-            return
-    else:
-        try:
-            ret = eqs(x0, t0)
-            if isinstance(ret, int) or isinstance(ret, list):
-                print('equation and inputs suitable')
-            else:
-                err = 5
-                return err
-        except (TypeError, IndexError):
-            print('args needed')
-            return
 
 
 if __name__ == '__main__':
@@ -271,27 +154,15 @@ if __name__ == '__main__':
         return ode(U0, 0, args)[0]
 
 
-    tests_failed, tests_passed = code_testing_solve_ode()
-    tests_failed_1, tests_passed_1 = code_testing_orbit_function()
+    tests_failed_s, tests_passed_s = code_testing_solve_ode()
+    tests_failed_o, tests_passed_o = code_testing_orbit_function()
 
-    print(tests_failed)
-    print(tests_passed)
-    print(tests_failed_1)
-    print(tests_passed_1)
-    # method = 'runge'
-    eqs = hopf
-    ode = hopf
-    # args = [1, -1]
-    # x0 = 1.5, 1.5
-    # t0 = 5
-    # deltat_max = 0.01
-    # test_input_solve_ode(x0, t0, t1, eqs, method, deltat_maxx, args)
-    #
-    #
-    U0 = 1.5, 1.5, 5
-    # U0 = 1.5, 1.5, -700
-    args = [1, -1]
-    # args = [1]
-    # test_input_orbit_shooting(hopf, U0, pc_stable_0, args)
-    # orb = orbit(hopf, U0, pc_stable_0, args)
-    # solve_ode(unsuitable_x0, suitable_t0, suitable_t1, f, suitable_method, suitable_dt)
+    print('--------------------------')
+    print('SOLVE ODE ')
+    print('TESTS FAILED: ', tests_failed_s)
+    print('TESTS PASSED: ', tests_passed_s)
+    print('--------------------------')
+    print('ORBIT SHOOTING')
+    print('TESTS FAILED: ', tests_failed_o)
+    print('TESTS PASSED: ', tests_passed_o)
+    print('--------------------------')
