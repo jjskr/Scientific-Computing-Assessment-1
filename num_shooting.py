@@ -14,14 +14,15 @@ def shooting(ode):
     """
 
     def conditions(U0, *args):
+        """
+        Function needed to be satisfied to calculate limit cycle
+        :param U0: current conditions
+        :param args: additional arguments
+        :return: conditions to be satisfied for calculating a limit cycle
+        """
 
-        if len(args) == 1:
-            args = args[0]
-            pc = args[0]
-            args = args[1:]
-        else:
-            pc = args[0]
-            args = args[1:]
+        pc = args[0]
+        args = args[1:]
 
         X0, T = U0[:-1], U0[-1]
         sols = solve_ode(X0, 0, T, ode, 'runge', 0.01, *args)
@@ -55,7 +56,12 @@ def orbit(ode, U0, pc, *args):
     try:
         is_fun = str(ode)[1]
         if is_fun == 'f':
-            pass
+            try:
+                sol1 = ode(U0[:-1], U0[-1], *args)
+                if len(sol1) != len(U0[:-1]):
+                    raise IndexError('Unsuitable initial condition dimensions')
+            except (TypeError, ValueError):
+                raise TypeError('Unsuitable initial conditions dimensions')
         else:
             raise TypeError('Given ode(s) not a function')
     except (IndexError, TypeError):
@@ -133,6 +139,9 @@ if __name__ == '__main__':
         X0, T = sol[:-1], sol[-1]
         sol_mine = solve_ode(X0, 0, T, ode, 'runge', 0.01, args)
         plt.plot(sol_mine[:, 0], sol_mine[:, 1])
+        plt.title('Phase portrait for given ode')
+        plt.xlabel('x')
+        plt.ylabel('y')
         plt.show()
 
 
@@ -153,32 +162,43 @@ if __name__ == '__main__':
         plt.plot(t, sol_mine)
         plt.xlabel('Time (s)')
         plt.legend(['x', 'y'])
+        plt.title('ODE for one limit cycle in time domain')
         plt.show()
 
+    # plotting predator prey equations with different b value to assess the systems behaviour
 
-    # # initial guess predator-prey
+    # initial guess predator-prey
     X0 = 0.2, 0.3
     T = 21
     U0 = 0.2, 0.3, 21
-    # U0 = 100, 100, -100
     args = [1, 0.26, 0.1]
     ode = pp_eqs
     pc = pc_stable_0
 
     # b > 0.26 - graph shows that function converges
     args[1] = 0.3
-    sol_mine = solve_ode(X0, 0, 100, ode, 'runge', 0.01, args)
+    sol_mine_less = solve_ode(X0, 0, 100, ode, 'runge', 0.01, args)
     t_val = math.ceil(100/0.01) + 1
-    t = np.linspace(0, T, t_val)
-    plt.plot(t, sol_mine)
+    t = np.linspace(0, 100, t_val)
+    plt.plot(t, sol_mine_less)
+    plt.title('Graph showing how predator prey equations vary over time, b > 0.26')
     plt.show()
 
     # b < 0.26 - graph shows that function diverges
     args[1] = 0.16
-    sol_mine = solve_ode(X0, 0, 100, ode, 'runge', 0.01, args)
+    sol_mine_more = solve_ode(X0, 0, 100, ode, 'runge', 0.01, args)
     t_val = math.ceil(100/0.01) + 1
-    t = np.linspace(0, T, t_val)
-    plt.plot(t, sol_mine)
+    t = np.linspace(0, 100, t_val)
+    plt.plot(t, sol_mine_more)
+    plt.title('Graph showing how predator prey equations vary over time, b < 0.26')
+    plt.show()
+
+    # figure showing how phase portrait varies with beta
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+    ax1.plot(sol_mine_less[:, 0], sol_mine_less[:, 1])
+    ax1.set_title('beta < 0.26')
+    ax2.plot(sol_mine_more[:, 0], sol_mine_more[:, 1])
+    ax2.set_title('beta > 0.26')
     plt.show()
 
     # finding orbit manually
@@ -190,31 +210,10 @@ if __name__ == '__main__':
     plt.plot(t, sol_mine)
     plt.show()
 
+    # using conditions and time from orbit function to plot both phase portraits and time series
+    # of predator prey equations
     # plotting phase portrait
     shooting_plots(U0, ode, pc, args)
 
     # plotting orbit found by orbit function for predator prey equations
     shooting_one_cycle(U0, ode, pc, args)
-
-    # initial guess hopf
-    # method = 'runge'
-    # ode = hopf
-    # args = [1, -1]
-    # U0 = 1.5, 1.5, 5
-    # X0 = 1.5, 1.5
-    # T = 5
-    # pc = pc_hopf
-
-    deltat_max = 0.01
-    #
-    # orb = orbit(ode, U0, pc, args)
-    # print(orb)
-
-    # X0 = 1.6, 1.2
-    # # initial guess hopf 3 odes
-    # X0 = 1, 1, 1
-    # T = 8
-
-    # shooting_plots(U0, ode, pc_stable_0, args)
-    # shooting_one_cycle(U0, ode, pc_stable_0, args)
-    # test_hopf_solutions(X0, T, ode, method, deltat_max, *args)

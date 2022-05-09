@@ -6,112 +6,14 @@ from num_continuation import nat_continuation
 import math
 
 
-def cubic_eq(x, args):
-
-    c = args
-    cubic_sol = x**3 - x + c
-
-    return cubic_sol
-
-
-def hopfn(U0, t, args):
-
-    beta = args
-
-    u1, u2 = U0
-
-    du1dt = beta * u1 - u2 - u1 * (u1**2 + u2**2)
-    du2dt = u1 + beta * u2 - u2 * (u1**2 + u2**2)
-
-    return [du1dt, du2dt]
-
-
-def pc_stable_0(U0, T, ode, args):
-    return ode(U0, 0, args)[0]
-
-
-def hopf(U0, t, args):
-    """
-    A function that returns solutions to the hopf equations at (U0, t)
-    :param U0: values for x and y
-    :param t: time
-    :param args: list of beta and sigma constants
-    :return: solutions to hopf equations
-    """
-
-    beta = args[0]
-    sigma = args[1]
-    u1, u2 = U0
-    du1dt = beta * u1 - u2 + sigma * u1 * (u1**2 + u2**2)
-    du2dt = u1 + beta * u2 + sigma * u2 * (u1**2 + u2**2)
-
-    return [du1dt, du2dt]
-
-
-def true_sol(t, args):
-    """
-    Function returning true hopf solution at t
-    :param t: time value
-    :param args: beta and theta values
-    :return: hopf solution at t
-    """
-
-    beta = args[0]
-    theta = args[1]
-
-    u1 = np.sqrt(beta) * np.cos(t + theta)
-    u2 = np.sqrt(beta) * np.sin(t + theta)
-
-    return [u1, u2]
-
-
-def true_sol_3(t, args):
-    """
-    Function returning true solution for 3 dimensional hopf equation at t
-    :param t: time value
-    :param args: beta and theta values
-    :return: true solution for 3 dimensional hopf equation at t
-    """
-
-    beta = args[0]
-    theta = args[1]
-
-    u1 = np.sqrt(beta) * np.cos(t + theta)
-    u2 = np.sqrt(beta) * np.sin(t + theta)
-    u3 = 0
-
-    return [u1, u2, u3]
-
-
-def hopf_3(U0, t, args):
-    """
-    Function for 3 dimensional hopf equatiom
-    :param U0: initial conditions
-    :param t: time value
-    :param args: beta and sigma values
-    :return: values of dudt for all u values
-    """
-    beta = args[0]
-    sigma = args[1]
-
-    u1, u2, u3 = U0
-
-    du1dt = beta * u1 - u2 + sigma * u1 * (u1**2 + u2**2)
-    du2dt = u1 + beta * u2 + sigma * u2 * (u1**2 + u2**2)
-    du3dt = -u3
-
-    return [du1dt, du2dt, du3dt]
-
-
 def test_shooting_solutions(U0, ode, f_true_sol, args):
 
     """
     Function to test for correct solve_ode values for 2D and 3D ODEs
     :param U0: initial conditions
     :param ode: ODE(s) to solve for
-    :param deltat_max:
-    :param f_true_sol:
-    :param args:
+    :param f_true_sol: true solution
+    :param args: required arguments
     :return: test_status, 0 if passed, 1 if failed
     """
 
@@ -175,6 +77,102 @@ def test_shooting_solutions(U0, ode, f_true_sol, args):
 
 if __name__ == '__main__':
 
+    def cubic_eq(x, args):
+
+        c = args
+        cubic_sol = x ** 3 - x + c
+
+        return cubic_sol
+
+
+    def hopfn(U0, t, args):
+
+        beta = args
+
+        u1, u2 = U0
+
+        du1dt = beta * u1 - u2 - u1 * (u1 ** 2 + u2 ** 2)
+        du2dt = u1 + beta * u2 - u2 * (u1 ** 2 + u2 ** 2)
+
+        return [du1dt, du2dt]
+
+
+    def pc_stable_0(U0, T, ode, args):
+        return ode(U0, 0, args)[0]
+
+
+    def hopf(U0, t, args):
+        """
+        A function that returns solutions to the hopf equations at (U0, t)
+        :param U0: values for x and y
+        :param t: time
+        :param args: list of beta and sigma constants
+        :return: solutions to hopf equations
+        """
+
+        beta = args[0]
+        sigma = args[1]
+        u1, u2 = U0
+        du1dt = beta * u1 - u2 + sigma * u1 * (u1 ** 2 + u2 ** 2)
+        du2dt = u1 + beta * u2 + sigma * u2 * (u1 ** 2 + u2 ** 2)
+
+        return [du1dt, du2dt]
+
+
+    def true_sol(t, args):
+        """
+        Function returning true hopf solution at t
+        :param t: time value
+        :param args: beta and theta values
+        :return: hopf solution at t
+        """
+
+        beta = args[0]
+        theta = args[1]
+
+        u1 = np.sqrt(beta) * np.cos(t + theta)
+        u2 = np.sqrt(beta) * np.sin(t + theta)
+
+        return [u1, u2]
+
+
+    def true_sol_3(t, args):
+        """
+        Function returning true solution for 3 dimensional hopf equation at t
+        :param t: time value
+        :param args: beta and theta values
+        :return: true solution for 3 dimensional hopf equation at t
+        """
+
+        beta = args[0]
+        theta = args[1]
+
+        u1 = np.sqrt(beta) * np.cos(t + theta)
+        u2 = np.sqrt(beta) * np.sin(t + theta)
+        u3 = 0
+
+        return [u1, u2, u3]
+
+
+    def hopf_3(U0, t, args):
+        """
+        Function for 3 dimensional hopf equatiom
+        :param U0: initial conditions
+        :param t: time value
+        :param args: beta and sigma values
+        :return: values of dudt for all u values
+        """
+        beta = args[0]
+        sigma = args[1]
+
+        u1, u2, u3 = U0
+
+        du1dt = beta * u1 - u2 + sigma * u1 * (u1 ** 2 + u2 ** 2)
+        du2dt = u1 + beta * u2 + sigma * u2 * (u1 ** 2 + u2 ** 2)
+        du3dt = -u3
+
+        return [du1dt, du2dt, du3dt]
+
     # functions called to test the results obtained by solve_ode function and orbit to ensure correct values are
     # found. tests that time period found is approximately equal to 2*pi
 
@@ -187,9 +185,9 @@ if __name__ == '__main__':
     deltat_max = 0.01
 
     if test_shooting_solutions(U0, ode, true_sol, args) == 0:
-        print('test passed for ordinary hopf')
+        print('value test passed for ordinary hopf')
     else:
-        print('test failed for ordinary hopf')
+        print('value test failed for ordinary hopf')
 
     ode = hopf_3
     U0 = 1.5, 1.5, 1.5, 6
@@ -197,9 +195,9 @@ if __name__ == '__main__':
     T = 6
 
     if test_shooting_solutions(U0, ode, true_sol_3, args) == 0:
-        print('test passed for 3 dimensional hopf')
+        print('value test passed for 3 dimensional hopf')
     else:
-        print('test failed for 3 dimensional hopf')
+        print('value test failed for 3 dimensional hopf')
 
     # testing natural parameter continuation errors for hopf
 
@@ -230,38 +228,6 @@ if __name__ == '__main__':
             error = 1
 
     if error == 0:
-        print('test passed for continuation')
+        print('value test passed for continuation')
     else:
-        print('test failed for continuation')
-
-    # testing natural parameter continuation errors for hopf below 0
-    # doesnt work as explicit solution contains square roots, so as beta falls below 0 explicit
-    # solution fails to compute
-
-    # U0 = 1.4, 0, 6.3
-    # pmin = 2
-    # pmax = -1
-    # pstep = 20
-    #
-    # par_list, solutions = nat_continuation(hopfn, U0, pmin, pmax, pstep, pc_stable_0, shooting)
-    # print(par_list)
-    # print(solutions)
-    # t_list = []
-    # exact_sols = []
-    # j = 0
-    # for i in solutions:
-    #     t = i[-1]
-    #     args = [par_list[j], 0]
-    #     exact_sol = true_sol(t, args)
-    #     exact_sols = exact_sols + [exact_sol]
-    #     j += 1
-    # print(exact_sols)
-    # error = 0
-    # for i in range(len(exact_sols)):
-    #     error1 = abs(solutions[i][0] - exact_sols[i][0])
-    #     error2 = abs(solutions[i][1] - exact_sols[i][1])
-    #     if error1 > 10**-5:
-    #         error = 1
-    #     elif error2 > 10**-5:
-    #         error = 1
-    # print(error)
+        print('value test failed for continuation')

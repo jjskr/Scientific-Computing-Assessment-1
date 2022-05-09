@@ -95,7 +95,7 @@ def solve_to(fun, x0, t0, t1, h, method, *args):
     try:
         intervals = math.floor(t_diff/h)
     except ValueError:
-        print('Solution failed to compute')
+        print('Number of intervals failed to compute (solve_odes.solve_to)')
         intervals = 1
 
     if method == 'euler':
@@ -125,21 +125,22 @@ def solve_ode(x0, t0, t1, eqs, method, deltat_max, *args):
     :return: x values at each time value
     """
 
+    # checks type of initial conditions
     if isinstance(x0, tuple) or isinstance(x0, int) or isinstance(x0, np.ndarray):
         pass
     else:
         raise TypeError('Initial conditions wrong type')
-
+    # checks type of initial time
     if isinstance(t0, int) or isinstance(t0, float):
         pass
     else:
         raise TypeError('Initial time wrong type')
-
+    # checks type of final time
     if isinstance(t1, int) or isinstance(t1, float):
         pass
     else:
         raise TypeError('Final fime wrong type')
-
+    # checks given ode is a function
     try:
         is_fun = str(eqs)[1]
         if is_fun == 'f':
@@ -148,51 +149,17 @@ def solve_ode(x0, t0, t1, eqs, method, deltat_max, *args):
             raise TypeError('Given ode not a function')
     except IndexError:
         raise TypeError('Given ode not a function')
-
+    # checks method is suitable
     if method == 'runge' or method == 'euler':
         pass
     else:
         raise TypeError('Given method not suitable')
-
+    # tests delta t is a integer or float
     try:
         float(deltat_max)
         pass
     except ValueError:
         raise ValueError('Given delta t wrong type')
-
-    try:
-        is_fun = str(eqs)[1]
-        if is_fun == 'f':
-            try:
-                sol1 = eqs(x0, t0, *args)
-                if len(sol1) != len(x0):
-                    raise IndexError('Unsuitable initial condition dimensions')
-            except TypeError:
-                raise TypeError('Unsuitable initial conditions dimensions')
-        else:
-            raise TypeError('Given ode(s) not a function')
-    except (IndexError, TypeError):
-        raise TypeError('Given ode(s) not a function')
-
-    # if args:
-    #     pass
-    # else:
-    #     try:
-    #         ret = eqs(x0, t0)
-    #         print(type(ret), 'type')
-    #         if isinstance(ret, int) or isinstance(ret, list):
-    #             pass
-    #         elif isinstance(ret, tuple):
-    #             try:
-    #                 ret = ret + 1
-    #                 print(ret, 'ret')
-    #             except TypeError:
-    #                 raise TypeError('args needed/initial conditions wrong length')
-    #         else:
-    #             raise IndexError('args needed/initial conditions wrong length')
-    #     except (TypeError, IndexError):
-    #         print('args needed/initial conditions wrong length')
-    #         return
 
     x = [x0]
     t_array = []
@@ -223,17 +190,20 @@ if __name__ == '__main__':
     # Initial Conditions
     x0 = 1
     t0 = 0
-    t1 = 1
+    t1 = 10
     deltat_maxx = 0.01
 
     eul_sol_f = solve_ode(x0, t0, t1, f, 'euler', deltat_maxx)
 
     run_sol_f = solve_ode(x0, t0, t1, f, 'runge', deltat_maxx)
 
-    t = np.linspace(0, 1, 101)
-    plt.plot(t, eul_sol_f)
-    plt.plot(t, run_sol_f)
-    plt.plot(t, f_true(t))
+    t = np.linspace(0, 10, 1002)
+    plt.plot(t, eul_sol_f, label='Euler')
+    plt.plot(t, run_sol_f, label='Runge-Kutta')
+    plt.plot(t, f_true(t), label='Exact')
+    plt.xlabel('t')
+    plt.ylabel('x')
+    plt.legend()
     plt.show()
 
     # solving 2 dimensional odes over a long time span to show long term behaviours of respective methods
@@ -242,7 +212,7 @@ if __name__ == '__main__':
 
     # Initial Conditions f2
     t0 = 0
-    t1 = 5
+    t1 = 10
     x0 = 1, 1
     deltat_maxx = 1
     f2_sol = solve_ode(x0, t0, t1, f2, 'runge', deltat_maxx)
@@ -320,4 +290,5 @@ if __name__ == '__main__':
     start_t = time.time()
     solve_ode(x0, t0, t1, f, 'euler', 0.4714866)
     final_t_e = time.time() - start_t
-    print(final_t_r, final_t_e)
+    print('Time taken RK4: ',final_t_r)
+    print('Time taken Euler: ', final_t_e)
