@@ -92,9 +92,9 @@ def nat_continuation(ode, U0, par_min, par_max, par_split, pc, discretisation, s
     solut_list = []
 
     # rounding can be more lenient with pde calculations
-    if solver == 'cont_pde':
+    if solver == 'pde':
         rou = 10
-        solver = cont_pde
+        solver = cont_pde_solver
     else:
         rou = 5
 
@@ -275,22 +275,63 @@ def psuedo_continuation_h(ode, U0, par_min, par_max, par_split, discretisation, 
 def continuation(method, ode, U0, par_min, par_max, par_split, pc, discretisation, solver=fsolve):
     """
     Continuation function passing parameters onto desired method of continuation
-    :param method: choice between 'euler' and 'runge'
+    :param method: choice between 'pseudo' and 'normal'
     :param ode: system of ODEs to perform chosen continuation on
     :param U0: initial conditions
     :param par_min: parameter to begin at
     :param par_max: parameter to finish at
     :param par_split: number of splits in parameter list
     :param pc: phase condition - None if not required
-    :param discretisation: method of discretisation - 'pseudo' or 'natural'
+    :param discretisation: method of discretisation - 'shooting' or lambda x: x
     :param solver: solver defaults as fsolve, cont_pde for pdes
     :return: solutions for parameters in parameter list
     """
+
+    if isinstance(U0, tuple) or isinstance(U0, int):
+        pass
+    else:
+        raise TypeError('Initial conditions wrong type')
+
+    if isinstance(par_min, int) or isinstance(par_min, float):
+        pass
+    else:
+        raise TypeError('Initial parameter value wrong type')
+
+    if isinstance(par_max, int) or isinstance(par_max, float):
+        pass
+    else:
+        raise TypeError('Final parameter value wrong type')
+
+    if isinstance(par_split, int):
+        pass
+    else:
+        raise TypeError('Number of splits wrong type')
+
+    try:
+        is_fun = str(ode)[1]
+        if is_fun == 'f':
+            pass
+        else:
+            raise TypeError('Given ode not a function')
+    except IndexError:
+        raise TypeError('Given ode not a function')
+
+    if pc:
+        try:
+            is_fun = str(pc)[1]
+            if is_fun == 'f':
+                pass
+            else:
+                raise TypeError('Given phase condition not a function')
+        except IndexError:
+            raise TypeError('Given phase condition not a function')
 
     if method == 'pseudo':
         sols, pars = psuedo_continuation(ode, U0, par_min, par_max, par_split, discretisation, solver)
     elif method == 'natural':
         sols, pars = nat_continuation(ode, U0, par_min, par_max, par_split, pc, discretisation, solver)
+    else:
+        raise ValueError('method not suitable')
 
     return sols, pars
 
@@ -310,7 +351,7 @@ if __name__ == '__main__':
 
     # plotting natural continuation and pseudo arc length results for cubic
     # as c varies between -2 and 2
-    # # cubic initial conditions
+    # cubic initial conditions
     U0 = 1
     pmin = -2
     pmax = 2
@@ -361,7 +402,7 @@ if __name__ == '__main__':
 
     # pde continuation, varying t between 0 and 0.5 with homogeneous boundaries
 
-    def pdef(U0, arg):
+    def ode_equivalent(U0, arg):
         """
         Function to return the function for solver to find root of
         :param U0: initial conditions (unused)
@@ -377,9 +418,10 @@ if __name__ == '__main__':
         return u_j
 
 
-    def cont_pde(f, U0, args):
+    def cont_pde_solver(f, U0, args):
         """
-        New solver defined as fsolve is not suitable, we need to pass on to solve_pde instead
+        New solver defined as fsolve is not suitable, we need to pass on to solve_pde instead, function will
+        pass U0 and args into pdef, updating args and calling solve_pde
         :param f:
         :param U0:
         :param args:
@@ -409,8 +451,8 @@ if __name__ == '__main__':
     mx = 30  # number of gridpoints in space
     mt = 1000  # number of gridpoints in time
 
-    U0 = np.zeros(mx+1)
-    param, sols = continuation('natural', pdef, U0, 0, 0.5, 5, None, lambda x: x, 'cont_pde')
+    U0 = tuple(np.zeros(31))
+    param, sols = continuation('natural', ode_equivalent, U0, 0, 0.5, 5, None, lambda x: x, 'pde')
     t = np.linspace(0, 0.5, mx + 1)  # mesh points in time
 
     j = 0
