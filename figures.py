@@ -16,6 +16,7 @@ import math
 # from num_shooting import hopf
 import time
 
+
 def error_graph(x, time, time1, fun):
 
     h_value_list = np.logspace(-4, 0, 50)
@@ -47,6 +48,8 @@ def error_graph(x, time, time1, fun):
     plt.ylabel('Error')
     plt.legend()
     plt.show()
+
+    return error_list_eul, error_list_eul
 
 
 def x_vs_y(fun, x0, t0, t1, deltat_maxx, method='runge', *args):
@@ -105,7 +108,10 @@ def shooting_one_cycle(U0, ode, *args):
 x0 = 1
 t0 = 0
 t1 = 1
-# error_graph(x0, t0, t1, f)
+error_graph(x0, t0, t1, f)
+
+# from error list, found timesteps for each that result in similar errors, used time to measure time they take to
+# compute
 start_t = time.time()
 solve_ode(x0, t0, t1, f, 'runge', 0.000737)
 final_t_r = time.time() - start_t
@@ -113,7 +119,7 @@ final_t_r = time.time() - start_t
 start_t = time.time()
 solve_ode(x0, t0, t1, f, 'euler', 0.4714866)
 final_t_e = time.time() - start_t
-print(final_t_r, final_t_e)
+print('runge-kutta: ' + str(final_t_r), 'euler: ' + str(final_t_e))
 #
 # # graph showing x and y vs time
 #
