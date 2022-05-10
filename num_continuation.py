@@ -1,18 +1,16 @@
 from scipy.optimize import fsolve
 from num_shooting import shooting
 import matplotlib.pyplot as plt
-# from num_shooting import hopf
 import numpy as np
 from pde_solving import solve_pde
 from num_shooting import orbit
-from math import pi
 import warnings
-from solve_odes import solve_ode
-
+import time
+# ignore runtime warnings caused by natural parameter continuation
 warnings.filterwarnings('ignore')
 
 
-def nat_continuation(ode, U0, params_list, pc, discretisation, solver=fsolve):
+def nat_continuation(ode, U0, params_list, pc, discretisation, solver):
     """
     Performs natural parameter continuation on chosen set of ODEs returning parameter list and corresponding solution
     for each parameter value
@@ -26,85 +24,108 @@ def nat_continuation(ode, U0, params_list, pc, discretisation, solver=fsolve):
     """
 
     solut_list = []
-
+    nat_start = time.time()
+    print('Natural parameter continuation begins')
     for par in params_list:
-        if pc:
+        if discretisation == shooting:
             args = (pc, par)
         else:
             args = par
-        if solver == 'pde':
+        if solver == solve_pde:
             # limited to dirichlet homogeneous boundaries, potential improvement
-            U0 = solve_pde(30, 1000, 'CN', 'dirichlet', lambda x: 0, lambda x: 0, False, [1, 1, par])
+            # also only allows time to be varied
+            U0 = solver(30, 1000, 'CN', 'dirichlet', lambda x: 0, lambda x: 0, False, [1, 1, par])
         else:
             U0 = solver(discretisation(ode), U0, args)
         solut_list = solut_list + [U0]
-        U0 = np.round(U0, 5)
+        # rounding needed for Hopfield equations or solve_ode breaks
+        if discretisation == shooting:
+            U0 = np.round(U0, 6)
+    nat_end = time.time() - nat_start
+    print('Done! Time taken: ', nat_end)
+    return solut_list, params_list
 
-    return params_list, solut_list
 
-
-def psuedo_continuation(ode, U0, params_list, discretisation):
+def psuedo_continuation(ode, U0, params_list, discretisation, pc):
     """
     Performs pseudo-arclength continuation on chosen set of ODEs returning parameter list and
     corresponding solution for each parameter value
+
     :param ode: System of ODEs to solve
     :param U0: Initial conditions
-    :param params_list: List of parameters to use
-    :param discretisation: Discretisation to use to solve
+    :param params_list: List of parameters
+    :param discretisation: Discretisation to use
     :return: List of parameters and solutions at each parameter value
     """
+    def new_predict_calc(solution_list, parameter_list, index):
+        """
+        Function returns updated predictions for pseudo arclength
+        :param solution_list: list of solutions for given iteration
+        :param parameter_list: list of parameters for given iteration
+        :param index: current iteration
+        :return: delta x, delta p and new prediction array
+        """
+        x_change = solution_list[index + 1] - solution_list[index]
+        p_change = parameter_list[index + 1] - parameter_list[index]
+        pred_arr = np.r_[solution_list[index + 1] + x_change, parameter_list[index + 1] + p_change]
 
-    def p_upd(pred):
+        return x_change, p_change, pred_arr
+
+    def update_parameter_val(new_parameter):
         """
         Function to update parameter in pseudo arclength equation
-        :param pred: next prediction
-        :return: par updated as prediction
+        :param new_parameter: prediction for next parameter value
+        :return: updated parameter value
         """
-        par = pred
-        return par
-
-    # first two parameter values calculated
-    diff = params_list[1] - params_list[0]
-    par0 = params_list[0]
-    par1 = par0 + diff
-    param_l = [par0, par1]
+        return new_parameter
 
     if discretisation == shooting:
-            par0 = [pc_stable_0, par0]
-            par1 = [pc_stable_0, par1]
+        args = (pc, params_list[0])
+        args1 = (pc, params_list[1])
+        u0 = fsolve(discretisation(ode), U0, args)
+        # rounding needed or error in solve ode, potential improvement
+        val_round = np.round(u0, 5)
+        u1 = fsolve(discretisation(ode), val_round, args1)
+    else:
+        u0 = fsolve(discretisation(ode), U0, params_list[0])
+        u1 = fsolve(discretisation(ode), u0, params_list[1])
 
-    # initial two values found to start pseudo-arclength continuation
-    val0 = fsolve(discretisation(ode), U0, args=par0)
-    val1 = fsolve(discretisation(ode), val0, args=par1)
-    sol_lis = [val0[0], val1[0]]
-    i = 0
+    sol_lis, param_l = [u0, u1], [params_list[0], params_list[1]]
 
-    # while loop iterates through until final parameter is reached
-    par_add = params_list[0]
-    while par_add < params_list[-1]:
-
-        # generate sec
-        delta_x = sol_lis[i+1] - sol_lis[i]
-        delta_p = param_l[i+1] - param_l[i]
-        # prediction for next value updates
-        pred_x = sol_lis[i+1] + delta_x
-        pred_p = param_l[i+1] + delta_p
-        pred_ar = [pred_x, pred_p]
-        pred_ar = np.array(pred_ar)
-        # solution found by appending
-        sol = fsolve(lambda cur_s: np.append(discretisation(ode)(cur_s[:-1], p_upd(cur_s[-1])), np.dot(cur_s[:-1] - pred_x, delta_x) + np.dot(cur_s[-1] - pred_p, delta_p)), pred_ar)
-        # solution array updated
-        sol_add = sol[:-1][0]
-        par_add = sol[-1]
-        sol_lis = sol_lis + [sol_add]
-        param_l = param_l + [par_add]
-
-        i += 1
+    # added time simulation for pseudo arclength due to long runtimes
+    pseudo_start = time.time()
+    print('Pseudo-arclength continuation begins')
+    # limited iterations due to length of time taken to run for hopf equations
+    # chose high enough i value to show pseudo-arclength method making it around the curve
+    for i in range(80):
+        # updates parameters to pass into equation
+        delta_x, delta_p, prediction_array = new_predict_calc(sol_lis, param_l, i)
+        # equation updated until root is found,
+        if discretisation == shooting:
+            # root found for solving discretisation problem with updated parameter and pseudo arclength equation
+            sol = fsolve(lambda x: np.append(discretisation(ode)(x[:-1], pc, update_parameter_val(x[-1])),
+                                                 np.dot(x[:-1] - prediction_array[:-1], delta_x) + np.dot(
+                                                     x[-1] - prediction_array[-1],
+                                                     delta_p)), prediction_array)
+        # pc not needed for cubic equation
+        else:
+            sol = fsolve(lambda x: np.append(discretisation(ode)(x[:-1], update_parameter_val(x[-1])),
+                                                 np.dot(x[:-1] - prediction_array[:-1], delta_x) + np.dot(
+                                                     x[-1] - prediction_array[-1],
+                                                     delta_p)), prediction_array)
+        # giving updates in terminal
+        if discretisation == shooting:
+            if i == 40:
+                print('Approximately halfway')
+        # solution and parameter values added to respective lists
+        sol_lis, param_l = sol_lis + [sol[:-1]], param_l + [sol[-1]]
+    pseudo_taken = time.time() - pseudo_start
+    print('Done! Time taken: ', pseudo_taken)
 
     return sol_lis, param_l
 
 
-def continuation(method, ode, U0, par_min, par_max, par_split, pc, discretisation, solver=fsolve):
+def continuation(method, ode, U0, par_min, par_max, par_split, pc, discretisation, solver):
     """
     Continuation function passing parameters onto desired method of continuation
     :param method: choice between 'pseudo' and 'normal'
@@ -118,7 +139,7 @@ def continuation(method, ode, U0, par_min, par_max, par_split, pc, discretisatio
     :param solver: solver defaults as fsolve, cont_pde for pdes
     :return: solutions for parameters in parameter list
     """
-
+    # input error traps
     if isinstance(U0, tuple) or isinstance(U0, int) or not U0:
         pass
     else:
@@ -129,20 +150,45 @@ def continuation(method, ode, U0, par_min, par_max, par_split, pc, discretisatio
     else:
         raise TypeError('Initial parameter value wrong type')
 
-    if isinstance(par_max, int) or isinstance(par_max, float):
+    if isinstance(par_max, int) or isinstance(par_max, float) or not par_max:
         pass
     else:
         raise TypeError('Final parameter value wrong type')
 
-    if isinstance(par_split, int):
+    if isinstance(par_split, int) or not par_split:
         pass
     else:
         raise TypeError('Number of splits wrong type')
 
+    if ode:
+        try:
+            is_fun = str(ode)[1]
+            if is_fun == 'f':
+                pass
+            else:
+                raise TypeError('Given ode not a function')
+        except IndexError:
+            raise TypeError('Given ode not a function')
+
+    if pc:
+        try:
+            is_fun = str(pc)[1]
+            if is_fun == 'f':
+                pass
+            else:
+                raise TypeError('Given phase condition not a function')
+        except IndexError:
+            raise TypeError('Given phase condition not a function')
+
+    if solver == solve_pde or solver == fsolve:
+        pass
+    else:
+        raise ValueError('Given solver not supported')
+    # initialise parameter list to pass onto continuation functions
     params_list = np.linspace(par_min, par_max, par_split)
 
     if method == 'pseudo':
-        sols, pars = psuedo_continuation(ode, U0, params_list, discretisation)
+        sols, pars = psuedo_continuation(ode, U0, params_list, discretisation, pc)
         return sols, pars
     elif method == 'natural':
         sols, pars = nat_continuation(ode, U0, params_list, pc, discretisation, solver)
@@ -152,95 +198,6 @@ def continuation(method, ode, U0, par_min, par_max, par_split, pc, discretisatio
         return sol
     else:
         raise ValueError('method not suitable')
-
-    return
-
-
-def psuedo_continuation_h(ode, U0, params_list, discretisation, solver=fsolve):
-    """
-    Performs pseudo-arclength continuation on chosen set of ODEs returning parameter list and
-    corresponding solution for each parameter value
-
-    :param ode: System of ODEs to solve
-    :param U0: Initial conditions
-    :param par_min: Starting parameter value
-    :param par_max: End parameter value
-    :param par_split: Number of intervals between parameter range
-    :param discretisation: Discretisation to use
-    :param solver: Type of solver to use. (only implemented fsolve and cont_pde for pdes)
-    :return: List of parameters and solutions at each parameter value
-    """
-
-    def p_upd(pars, pred):
-        """
-        Function to update parameter in pseudo arclength equation
-        :param pred: next prediction
-        :return: par updated as prediction
-        """
-
-        pars = pred
-
-        return pars
-
-    diff = params_list[1] - params_list[0]
-    par0 = params_list[0]
-    par1 = par0 + diff
-
-    param_l = [par0, par1]
-
-    if discretisation == shooting:
-            par0 = (pc_stable_0, par0)
-            par1 = (pc_stable_0, par1)
-
-    val0 = fsolve(discretisation(ode), U0, par0)
-    val0 = np.round(val0, 5)
-    val1 = fsolve(discretisation(ode), val0, par1)
-
-    print(val0, val1)
-
-    sol_lis = [val0, val1]
-
-    i = 0
-
-    par_add = params_list[1]
-    print(par_add)
-
-    # while par_add > params_list[-1]:
-    while i < 100:
-        print('yywww', sol_lis)
-        # generate sec
-        delta_x = sol_lis[i+1] - sol_lis[i]
-        delta_p = param_l[i+1] - param_l[i]
-        pred_x = sol_lis[i+1] + delta_x
-        pred_p = param_l[i+1] + delta_p
-
-        print('pushinp', pred_x)
-        # pred_ar = [pred_x, pred_p]
-        pred_ar = np.r_[pred_x, pred_p]
-
-        print('preddddtr', pred_ar)
-        print(pred_ar[:-1])
-
-        pars = pred_p
-
-        if discretisation == shooting:
-            sol = solver(lambda cur_s: np.append(discretisation(ode)(cur_s[:-1], pc_stable_0, p_upd(pars, cur_s[-1])),
-                                                 np.dot(cur_s[:-1] - pred_x, delta_x) + np.dot(cur_s[-1] - pred_p,
-                                                                                               delta_p)), pred_ar)
-
-        else:
-            sol = solver(lambda cur_s: np.append(discretisation(ode)(cur_s[:-1], p_upd(cur_s[-1])),
-                                                    np.dot(cur_s[:-1] - pred_x, delta_x) + np.dot(cur_s[-1] - pred_p,
-                                                                                                  delta_p)), pred_ar)
-        print(sol)
-        sol_add = sol[:-1]
-        par_add = sol[-1]
-        sol_lis = sol_lis + [sol_add]
-        param_l = param_l + [par_add]
-        print(i, 'IIIIIIIII')
-        i += 1
-
-    return sol_lis, param_l
 
 
 if __name__ == '__main__':
@@ -306,81 +263,69 @@ if __name__ == '__main__':
 
         return [du1dt, du2dt]
 
-    # experimenting
-
-    # args = [2]
-    # X0 = 1.2, 1.2
-    # sols = solve_ode(X0, 0, 6.4, hopfn, 'runge', 0.01, *args)
-
-    U0 = 1.2, 1.2, 6.4
-    pmin = 2
-    pmax = -1
-    pstep = 100
-    param_list = np.linspace(pmin, pmax, pstep)
-    sol_l, p_l = psuedo_continuation_h(hopfn, U0, param_list, shooting)
-    plt.plot(p_l, sol_l)
-    plt.show()
 
     # plotting natural continuation and pseudo arc length results for cubic
     # as c varies between -2 and 2
     # cubic initial conditions
-    U0 = 1
-    pmin = -2
-    pmax = 2
-    pstep = 100
-    #
-    par_list, solutions = continuation('natural', cubic_eq, U0, pmin, pmax, pstep, None, lambda x: x)
-    plt.plot(par_list, solutions, label='natural parameter')
-    # #
+
     U0 = 1
     pmin = -2
     pmax = 2
     pstep = 100
 
-    sol_l, p_l = continuation('pseudo', cubic_eq, U0, pmin, pmax, pstep, None, lambda x: x)
+    sol_l, p_l = continuation('natural', cubic_eq, U0, pmin, pmax, pstep, None, lambda x: x, fsolve)
+    plt.plot(p_l, sol_l, label='natural')
+    sol_l, p_l = continuation('pseudo', cubic_eq, U0, pmin, pmax, pstep, None, lambda x: x, fsolve)
     plt.plot(p_l, sol_l, label='pseudo-arclength')
     plt.title('Plot showing performance of continuation methods on cubic equation')
     plt.legend()
     plt.show()
 
-    # # hopf continuation - natural works but could not get pseudo arclength to work
+    # hopf continuation - beta varies
 
-    U0 = 1.4, 0, 6.3
+    U0 = 1, 1, 6
     pmin = 2
-    pmax = 0
+    pmax = -1
     pstep = 50
-
-    par_list, solutions = continuation('natural', hopfn, U0, pmin, pmax, pstep, pc_stable_0, shooting)
+    solutions, par_list = continuation('natural', hopfn, U0, pmin, pmax, pstep, pc_stable_0, shooting, fsolve)
     U0_sols = []
     for i in solutions:
         U0_sols = U0_sols + [i[0]]
     plt.plot(par_list, U0_sols)
-    plt.title('Plot showing performance of natural continuation on Hopfield equations')
+
+    pmin = 2
+    pmax = -1
+    pstep = 70
+    param_list = np.linspace(pmin, pmax, pstep)
+    sol_l, p_l = continuation('pseudo', hopfn, U0, pmin, pmax, pstep, pc_stable_0, shooting, fsolve)
+    psu_hopf = []
+    for i in sol_l:
+        psu_hopf = psu_hopf + [i[0]]
+    plt.plot(p_l, psu_hopf)
+    plt.title('Plot showing continuation results for normal Hopfield equations')
     plt.show()
-    #
-    # # modified hopf plots
-    #
+
+    # modified hopf plots
+    # does not work in pseudo-arclength
+
     pmin = 2
     pmax = -1
     pstep = 34
 
-    par_list_m, solutions_m = continuation('natural', hopfm, U0, pmin, pmax, pstep, pc_stable_0, shooting)
+    solutions_m, pars_m = continuation('natural', hopfm, U0, pmin, pmax, pstep, pc_stable_0, shooting, fsolve)
     U0_sols_m = []
     for i in solutions_m:
         U0_sols_m = U0_sols_m + [i[0]]
-    plt.plot(par_list_m, U0_sols_m)
-    plt.title('Plot showing performance of natural continuation on modified Hopfield equations')
+    plt.plot(pars_m, U0_sols_m)
+    plt.title('Plot showing natural parameter continuation results for modified Hopfield equations')
     plt.show()
 
     # pde continuation, varying t between 0 and 0.5 with homogeneous boundaries
     # shows the evolution of the gridspace as t varies
 
-    mx = 30  # number of gridpoints in space
-    mt = 1000  # number of gridpoints in time
+    sols, param = continuation('natural', None, None, 0, 0.5, 10, None, lambda x: x, solve_pde)
 
-    param, sols = continuation('natural', None, None, 0, 0.5, 10, None, lambda x: x, 'pde')
-
-    t = np.linspace(0, 0.5, mx + 1)  # mesh points in time
+    t = np.linspace(0, 0.5, 31)  # mesh points in time
 
     j = 0
 
