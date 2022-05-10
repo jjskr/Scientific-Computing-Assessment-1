@@ -24,7 +24,7 @@ def nat_continuation(ode, U0, params_list, pc, discretisation, solver):
     """
 
     solut_list = []
-    nat_start = time.time()
+    nat_start = time.process_time()
     print('Natural parameter continuation begins')
     for par in params_list:
         if discretisation == shooting:
@@ -41,7 +41,7 @@ def nat_continuation(ode, U0, params_list, pc, discretisation, solver):
         # rounding needed for Hopfield equations or solve_ode breaks
         if discretisation == shooting:
             U0 = np.round(U0, 6)
-    nat_end = time.time() - nat_start
+    nat_end = time.process_time() - nat_start
     print('Done! Time taken: ', nat_end)
     return solut_list, params_list
 
@@ -78,8 +78,8 @@ def psuedo_continuation(ode, U0, params_list, discretisation, pc):
         :param prediction_array: array containing prediction information
         :return: pseudo-arclength equation
         """
-        return np.dot(x[:-1] - prediction_array[:-1], delta_x) + np.dot(x[-1] - prediction_array[-1], delta_p)
-
+        return np.dot(delta_x, x[:-1] - prediction_array[:-1]) + np.dot(delta_p, x[-1] - prediction_array[-1])
+    # adds phase condition to args if shooting
     if discretisation == shooting:
         args = (pc, params_list[0])
         args1 = (pc, params_list[1])
@@ -94,7 +94,7 @@ def psuedo_continuation(ode, U0, params_list, discretisation, pc):
     sol_lis, param_l = [u0, u1], [params_list[0], params_list[1]]
 
     # added time simulation for pseudo arclength due to long runtimes
-    pseudo_start = time.time()
+    pseudo_start = time.process_time()
     print('Pseudo-arclength continuation begins')
     # limited iterations due to length of time taken to run for hopf equations
     # chose high enough i value to show pseudo-arclength method making it around the curve
@@ -116,7 +116,7 @@ def psuedo_continuation(ode, U0, params_list, discretisation, pc):
                 print('Approximately halfway')
         # solution and parameter values added to respective lists
         sol_lis, param_l = sol_lis + [sol[:-1]], param_l + [sol[-1]]
-    pseudo_taken = time.time() - pseudo_start
+    pseudo_taken = time.process_time() - pseudo_start
     print('Done! Time taken: ', pseudo_taken)
 
     return sol_lis, param_l
@@ -308,7 +308,6 @@ if __name__ == '__main__':
     pmin = 2
     pmax = -1
     pstep = 34
-
     solutions_m, pars_m = continuation('natural', hopfm, U0, pmin, pmax, pstep, pc_stable_0, shooting, fsolve)
     U0_sols_m = []
     for i in solutions_m:
@@ -321,17 +320,13 @@ if __name__ == '__main__':
     # shows the evolution of the gridspace as t varies
 
     sols, param = continuation('natural', None, None, 0, 0.5, 10, None, lambda x: x, solve_pde)
-
     t = np.linspace(0, 0.5, 31)  # mesh points in time
-
     j = 0
-
     for i in sols:
-        T = np.round(param[j], 4)
+        T = round(param[j], 4)
         T = str(T)
         plt.plot(t, i, label='T = ' + T)
         plt.legend()
         j += 1
-
     plt.title('Plot showing the state of the grid as time varies')
     plt.show()
