@@ -12,7 +12,6 @@ def shooting(ode):
     :param ode: System of odes
     :return: Conditions to solve as a function type
     """
-
     def conditions(U0, pc, *args):
         """
         Function needed to be satisfied to calculate limit cycle
@@ -20,12 +19,6 @@ def shooting(ode):
         :param args: additional arguments
         :return: conditions to be satisfied for calculating a limit cycle
         """
-        # interpret args
-        # print(U0)
-        # print(pc)
-        # print(args)
-        # pc = args[0]
-        # args = args[1:]
         # set up initial conditions to pass into solve_ode
         X0, T = U0[:-1], U0[-1]
         # find runge kutta solutions at T
@@ -37,7 +30,6 @@ def shooting(ode):
         period_cond = []
         for i in range(len(sol)):
             period_cond = period_cond + [X0[i] - sol[i]]
-        # print('period', period_cond)
 
         return np.r_[period_cond, phase_cond]
 
