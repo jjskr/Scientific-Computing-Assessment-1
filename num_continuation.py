@@ -24,8 +24,6 @@ def nat_continuation(ode, U0, params_list, pc, discretisation, solver):
     """
 
     solut_list = []
-    nat_start = time.process_time()
-    print('Natural parameter continuation begins')
     for par in params_list:
         if discretisation == shooting:
             args = (pc, par)
@@ -41,8 +39,7 @@ def nat_continuation(ode, U0, params_list, pc, discretisation, solver):
         # rounding needed for Hopfield equations or solve_ode breaks
         if discretisation == shooting:
             U0 = np.round(U0, 6)
-    nat_end = time.process_time() - nat_start
-    print('Done! Time taken: ', nat_end)
+
     return solut_list, params_list
 
 
@@ -93,9 +90,6 @@ def psuedo_continuation(ode, U0, params_list, discretisation, pc):
 
     sol_lis, param_l = [u0, u1], [params_list[0], params_list[1]]
 
-    # added time simulation for pseudo arclength due to long runtimes
-    pseudo_start = time.process_time()
-    print('Pseudo-arclength continuation begins')
     # limited iterations due to length of time taken to run for hopf equations
     # chose high enough i value to show pseudo-arclength method making it around the curve
     for i in range(80):
@@ -103,21 +97,20 @@ def psuedo_continuation(ode, U0, params_list, discretisation, pc):
         delta_x, delta_p, prediction_array = new_predict_calc(sol_lis, param_l, i)
         # equation updated until root is found,
         if discretisation == shooting:
-            # root found for solving discretisation problem with updated parameter and pseudo arclength equation
+            # root found for solving discretisation problem with updated pseudo arclength equation
+            # allows parameter value to be solved for to trace around curves after equilibrium
             sol = fsolve(lambda x: np.append(discretisation(ode)(x[:-1], pc, x[-1]), pseudo_eq(x, prediction_array)),
                          prediction_array)
         # pc not needed for cubic equation
         else:
             sol = fsolve(lambda x: np.append(discretisation(ode)(x[:-1], x[-1]), pseudo_eq(x, prediction_array)),
                          prediction_array)
-        # giving updates in terminal
+        # giving updates in terminal if shooting is used
         if discretisation == shooting:
             if i == 40:
                 print('Approximately halfway')
         # solution and parameter values added to respective lists
         sol_lis, param_l = sol_lis + [sol[:-1]], param_l + [sol[-1]]
-    pseudo_taken = time.process_time() - pseudo_start
-    print('Done! Time taken: ', pseudo_taken)
 
     return sol_lis, param_l
 
@@ -128,7 +121,7 @@ def continuation(method, ode, U0, par_min, par_max, par_split, pc, discretisatio
     :param method: choice between 'pseudo' and 'normal'
     :param ode: system of ODEs to perform chosen continuation on
     :param U0: initial conditions
-    :param par_min: parameter to begin at
+    :param par_min: parameter to begin at, if shooting then initial time
     :param par_max: parameter to finish at
     :param par_split: number of splits in parameter list
     :param pc: phase condition - None if not required
@@ -284,7 +277,12 @@ if __name__ == '__main__':
     pmin = 2
     pmax = -1
     pstep = 50
+    # added time simulation for hopf continuation due to long runtimes
+    nat_start = time.process_time()
+    print('Natural parameter continuation begins')
     solutions, par_list = continuation('natural', hopfn, U0, pmin, pmax, pstep, pc_stable_0, shooting, fsolve)
+    nat_end = time.process_time() - nat_start
+    print('Done! Time taken: ', nat_end)
     U0_sols = []
     for i in solutions:
         U0_sols = U0_sols + [i[0]]
@@ -294,7 +292,11 @@ if __name__ == '__main__':
     pmax = -1
     pstep = 70
     param_list = np.linspace(pmin, pmax, pstep)
+    pseudo_start = time.process_time()
+    print('Pseudo-arclength continuation begins')
     sol_l, p_l = continuation('pseudo', hopfn, U0, pmin, pmax, pstep, pc_stable_0, shooting, fsolve)
+    pseudo_taken = time.process_time() - pseudo_start
+    print('Done! Time taken: ', pseudo_taken)
     psu_hopf = []
     for i in sol_l:
         psu_hopf = psu_hopf + [i[0]]
