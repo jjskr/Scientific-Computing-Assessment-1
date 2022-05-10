@@ -215,6 +215,11 @@ def solve_pde(mx, mt, method, bc, p, q, plot, args):
     :return: state of pde at time = T
     """
 
+    def u_initial(x):
+        # initial temperature distribution
+        y = np.sin(pi * x / L)
+        return y
+
     if isinstance(mx, int):
         pass
     else:
@@ -270,12 +275,6 @@ def solve_pde(mx, mt, method, bc, p, q, plot, args):
         results_plot(u_j, bc, mx, T)
 
     return u_j
-
-
-def u_initial(x):
-    # initial temperature distribution
-    y = np.sin(pi * x / L)
-    return y
 
 
 def results_plot(u_j, bc, mx, T=0.5):
