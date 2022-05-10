@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import math
 from solve_odes import solve_ode
 from scipy.optimize import fsolve
-from scipy.integrate import solve_ivp
 
 
 def shooting(ode):
@@ -16,6 +15,7 @@ def shooting(ode):
         """
         Function needed to be satisfied to calculate limit cycle
         :param U0: current conditions
+        :param pc: Phase condition to use
         :param args: additional arguments
         :return: conditions to be satisfied for calculating a limit cycle
         """
@@ -41,6 +41,7 @@ def orbit(ode, U0, pc, *args):
     Calculates solution to shooting(ode) using fsolve
     :param ode: System of odes to solve for
     :param U0: Initial conditions
+    :param pc: Phase condition to use
     :param args: Arguments needed by system of odes
     :return: Solution of initial conditions and time period of one orbit in the form of an array
     """
@@ -132,14 +133,15 @@ if __name__ == '__main__':
         Function to plot orbit shooting solutions
         :param U0: initial conditions
         :param ode: ODE(s) to solve for
+        :param pc: Phase condition to use
         :param args: additional arguments for function
         :return: plots of orbit birufication
         """
 
         sol = orbit(ode, U0, pc, args)
         X0, T = sol[:-1], sol[-1]
-        sol_mine = solve_ode(X0, 0, T, ode, 'runge', 0.01, args)
-        plt.plot(sol_mine[:, 0], sol_mine[:, 1])
+        mysol = solve_ode(X0, 0, T, ode, 'runge', 0.01, args)
+        plt.plot(mysol[:, 0], mysol[:, 1])
         plt.title('Phase portrait for given ode')
         plt.xlabel('x')
         plt.ylabel('y')
@@ -151,16 +153,17 @@ if __name__ == '__main__':
         Function returning plots of x and y against time
         :param U0: initial conditions
         :param ode: ODE(s) to solve for
+        :param pc: Phase condition to use
         :param args: additional arguments to pass onto function
         :return: plots of cycle vs time
         """
 
         sol = orbit(ode, U0, pc, args)
         X0, T = sol[:-1], sol[-1]
-        sol_mine = solve_ode(X0, 0, T, ode, 'runge', 0.01, args)
+        mysol = solve_ode(X0, 0, T, ode, 'runge', 0.01, args)
         time_cycle = math.ceil(float(T) / 0.01) + 1
         t = np.linspace(0, T, time_cycle)
-        plt.plot(t, sol_mine)
+        plt.plot(t, mysol)
         plt.xlabel('Time (s)')
         plt.legend(['x', 'y'])
         plt.title('ODE for one limit cycle in time domain')
@@ -192,6 +195,13 @@ if __name__ == '__main__':
     t = np.linspace(0, 100, t_val)
     plt.plot(t, sol_mine_more)
     plt.title('Graph showing how predator prey equations vary over time, b < 0.26')
+    plt.show()
+
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+    ax1.plot(t, sol_mine_less)
+    ax1.set_title('beta < 0.26')
+    ax2.plot(t, sol_mine_more)
+    ax2.set_title('beta > 0.26')
     plt.show()
 
     # figure showing how phase portrait varies with beta
