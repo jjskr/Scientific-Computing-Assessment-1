@@ -7,9 +7,9 @@ from scipy.optimize import fsolve
 
 def shooting(ode):
     """
-    Uses chosen ODE to set function to solve to find orbit cycle of 2D and 3D systems of ODEs
+    Uses chosen ODE to set function to solve to find orbit cycle of systems of ODEs
     :param ode: System of odes
-    :return: Conditions to solve as a function type
+    :return: Conditions function
     """
     def conditions(U0, pc, *args):
         """
