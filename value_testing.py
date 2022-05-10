@@ -202,7 +202,7 @@ if __name__ == '__main__':
 
     # testing natural parameter continuation errors for hopf
 
-    U0 = 1.4, 0, 6.3
+    U0 = 1, 0, 6
     pmin = 2
     pmax = 0
     pstep = 20

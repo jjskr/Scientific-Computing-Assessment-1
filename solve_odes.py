@@ -236,7 +236,7 @@ if __name__ == '__main__':
     # may need zooming out to see points
     def error_graph(x, time, time1, fun):
 
-        h_value_list = np.logspace(-4, 0, 50)
+        h_value_list = np.logspace(-4, 0, 40)
         true_x = f_true(time1)
 
         error_list_eul = np.zeros(int(len(h_value_list)))

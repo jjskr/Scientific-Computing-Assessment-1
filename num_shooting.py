@@ -174,7 +174,7 @@ if __name__ == '__main__':
     # initial guess predator-prey
     X0 = 0.2, 0.3
     T = 21
-    U0 = 0.2, 0.3, 21
+    U0 = 1, 1, 20
     args = [1, 0.26, 0.1]
     ode = pp_eqs
     pc = pc_stable_0

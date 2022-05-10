@@ -5,6 +5,7 @@ import scipy.sparse as ssp
 from scipy.sparse.linalg import spsolve
 import warnings
 import time
+
 # bypass efficiency warnings, no real cause for concern
 warnings.filterwarnings('ignore', category=ssp.SparseEfficiencyWarning)
 
@@ -37,11 +38,11 @@ def forward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
     :return: conditions at t=T
     """
     # diagonals defined
-    dias = [lmbda, 1-2*lmbda, lmbda]
+    dias = [lmbda, 1 - 2 * lmbda, lmbda]
 
     if bc == 'dirichlet':
         # length of matrix required
-        m_len = mx-1
+        m_len = mx - 1
         # initiates tridiagonal matrix
         M = tri_mat(dias, m_len)
         # initiates additive vector
@@ -63,7 +64,6 @@ def forward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
         add_v = np.zeros(mx + 1)
 
         for j in range(0, mt):
-
             add_v[0], add_v[-1] = -p(t[j]), q(t[j])
             add_v_l = 2 * add_v * lmbda * deltax
             u_j = np.dot(M, u_j) + add_v_l
@@ -74,7 +74,6 @@ def forward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
         M[0, mx - 1], M[mx - 1, 0] = lmbda, lmbda
         u_j = u_j[:-1]
         for j in range(0, mt):
-
             u_jp1 = np.dot(M, u_j)
             u_j = u_jp1
 
@@ -96,7 +95,7 @@ def backward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
     :return: conditions at t=T
     """
 
-    dias = [-lmbda, 1+2*lmbda, -lmbda]
+    dias = [-lmbda, 1 + 2 * lmbda, -lmbda]
 
     if bc == 'dirichlet':
 
@@ -105,7 +104,6 @@ def backward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
         add_v = np.zeros(mx - 1)
 
         for j in range(0, mt):
-
             add_v[0], add_v[-1] = p(t[j]), q(t[j])
             add_v_l = add_v * lmbda
             u_jp1 = spsolve(M, u_j[1:mx]) + add_v_l
@@ -121,7 +119,6 @@ def backward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
         add_v = np.zeros(mx + 1)
 
         for j in range(0, mt):
-
             add_v[0], add_v[-1] = -p(t[j]), q(t[j])
             add_v_l = 2 * add_v * lmbda * deltax
             u_j = spsolve(M, u_j + add_v_l)
@@ -132,7 +129,6 @@ def backward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
         M[0, mx - 1], M[mx - 1, 0] = lmbda, lmbda
 
         for j in range(0, mt):
-
             u_jp1 = spsolve(M, u_j)
             u_j = u_jp1
 
@@ -154,8 +150,8 @@ def crank_nicholson(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
     :return: conditions at t=T
     """
 
-    dia1 = [-lmbda/2, 1+lmbda, -lmbda/2]
-    dia2 = [lmbda/2, 1-lmbda, lmbda/2]
+    dia1 = [-lmbda / 2, 1 + lmbda, -lmbda / 2]
+    dia2 = [lmbda / 2, 1 - lmbda, lmbda / 2]
 
     if bc == 'dirichlet':
 
@@ -164,10 +160,9 @@ def crank_nicholson(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
         add_v = np.zeros(mx - 1)
 
         for j in range(0, mt):
-
             add_v[0], add_v[-1] = p(t[j]), q(t[j])
             add_v_l = add_v * lmbda
-            u_jp1 = spsolve(MA, MB*u_j[1:mx]) + add_v_l
+            u_jp1 = spsolve(MA, MB * u_j[1:mx]) + add_v_l
             u_j[1:mx] = u_jp1[:]
             u_j[0], u_j[-1] = add_v[0], add_v[-1]
 
@@ -175,15 +170,14 @@ def crank_nicholson(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
 
         m_len = mx + 1
         MA, MB = tri_mat(dia1, m_len), tri_mat(dia2, m_len)
-        MA[0, 1], MA[mx, mx-1], MB[0, 1], MB[mx, mx-1] = 2 * lmbda, 2 * lmbda, 2 * lmbda, 2 * lmbda
+        MA[0, 1], MA[mx, mx - 1], MB[0, 1], MB[mx, mx - 1] = 2 * lmbda, 2 * lmbda, 2 * lmbda, 2 * lmbda
         MA, MB = ssp.csr_matrix(MA), ssp.csr_matrix(MB)
         add_v = np.zeros(mx + 1)
 
         for j in range(0, mt):
-
             add_v[0], add_v[-1] = -p(t[j]), q(t[j])
             add_v_l = 2 * add_v * lmbda * deltax
-            u_j = spsolve(MA, (MB*u_j)) + add_v_l
+            u_j = spsolve(MA, (MB * u_j)) + add_v_l
 
             u_j[0] = -add_v[0]
             u_j[-1] = add_v[-1]
@@ -195,8 +189,7 @@ def crank_nicholson(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
         MA, MB = ssp.csr_matrix(MA), ssp.csr_matrix(MB)
 
         for j in range(0, mt):
-
-            u_jp1 = spsolve(MA, MB*u_j)
+            u_jp1 = spsolve(MA, MB * u_j)
             u_j = u_jp1
 
     return u_j
@@ -278,7 +271,6 @@ def solve_pde(mx, mt, method, bc, p, q, plot, args):
 
 
 def results_plot(u_j, bc, mx, T=0.5):
-
     if bc == 'periodic':
         x = np.linspace(0, L, mx)
     else:
@@ -299,6 +291,7 @@ if __name__ == '__main__':
         y = np.exp(-kappa * (pi ** 2 / L ** 2) * t) * np.sin(pi * x / L)
         return y
 
+
     def p(t):
         """
         LHS boundary condition
@@ -307,6 +300,7 @@ if __name__ == '__main__':
         """
         return 0
 
+
     def q(t):
         """
         RHS boundary condition
@@ -314,6 +308,7 @@ if __name__ == '__main__':
         :return: boundary condition at t
         """
         return 0
+
 
     # Set problem parameters/functions
     kappa = 1.0  # diffusion constant
@@ -412,10 +407,12 @@ if __name__ == '__main__':
 
     # plot showing how distribution changes with p
 
+
     def u_exact_p(x, t, p):
         # the exact solution
         y = np.exp(-kappa * (pi ** 2 / L ** 2) * t) * np.sin(pi * x / L) ** p
         return y
+
 
     y_list = []
     labels = []
@@ -429,4 +426,5 @@ if __name__ == '__main__':
     pl.ylabel('u(x,0.5)')
     pl.xlabel('x')
     pl.legend()
+    pl.title('Plot showing how distribution changes as p varies')
     pl.show()
