@@ -4,44 +4,10 @@ import math
 import time
 
 
-def f(x, t):
-    """
-    A function that returns the value of dxdt = x at (x, t)
-    :param x: x value
-    :param t: t value
-    :return: value of ODE at (x, t)
-    """
-    return x
-
-
-def f2(U0, t):
-    """
-    A function that returns the value of dxdt = y and dydt = -x at (U0, t)
-    :param U0: tuple containing x, y values
-    :param t: t value
-    :return: values of ODEs at (U0, t)
-    """
-    x, y = U0
-    dxdt = y
-    dydt = -x
-    return [dxdt, dydt]
-
-
-def f_true(t):
-    """
-    A function that returns the true value of dxdt = x at (x, t)
-    :param x: x value
-    :param t: t value
-    :return: true value of ODE at (x, t)
-    """
-    x = np.exp(t)
-    return x
-
-
-def euler_step(f, x, t, delta_t, *args):
+def euler_step(ode, x, t, delta_t, *args):
     """
     A function completing 1 euler step, updating x and t
-    :param f: either one or a set of ODEs to estimate
+    :param ode: either one or a set of ODEs to estimate
     :param x: initial x value
     :param t: initial t value
     :param delta_t: step size
@@ -49,26 +15,27 @@ def euler_step(f, x, t, delta_t, *args):
     :return: value of x and t after 1 euler step
     """
 
-    x = x + delta_t * np.array(f(x, t, *args))
+    x = x + delta_t * np.array(ode(x, t, *args))
     t = t + delta_t
 
     return x, t
 
 
-def runge_kutta(f, x, t, delta_t, *args):
+def runge_kutta(ode, x, t, delta_t, *args):
     """
-    A function completing 1 4th order runge-kutta (RK4) step, updating x and t
-    :param f: either one or a set of ODEs to estimate
+    A function completing 1 4th-order runge-kutta (RK4) step, updating x and t
+    :param ode: either one or a set of ODEs to estimate
     :param x: initial x value
     :param t: initial t value
     :param delta_t: step size
     :param args: additional features/constants to pass into function
     :return: value of x and t after 1 RK4 step
     """
-    k1 = np.array(f(x, t, *args))
-    k2 = np.array(f((x + delta_t * k1/2), (t + delta_t/2), *args))
-    k3 = np.array(f((x + delta_t * k2/2), (t + delta_t/2), *args))
-    k4 = np.array(f((x + delta_t * k3), (t + delta_t), *args))
+
+    k1 = np.array(ode(x, t, *args))
+    k2 = np.array(ode((x + delta_t * k1/2), (t + delta_t/2), *args))
+    k3 = np.array(ode((x + delta_t * k2/2), (t + delta_t/2), *args))
+    k4 = np.array(ode((x + delta_t * k3), (t + delta_t), *args))
     k = (k1+2*k2+2*k3+k4)/6
     t = t + delta_t
     x = x + delta_t * k
@@ -92,11 +59,7 @@ def solve_to(fun, x0, t0, t1, h, method, *args):
 
     t_diff = t1 - t0
 
-    try:
-        intervals = math.floor(t_diff/h)
-    except ValueError:
-        print('Number of intervals failed to compute (solve_odes.solve_to)')
-        intervals = 1
+    intervals = math.floor(t_diff/h)
 
     if method == 'euler':
         for num in range(intervals):
@@ -111,11 +74,11 @@ def solve_to(fun, x0, t0, t1, h, method, *args):
     return x0
 
 
-def solve_ode(x0, t0, t1, eqs, method, deltat_max, *args):
+def solve_ode(x0, t0, t1, ode, method, deltat_max, *args):
     """
     A function which solves given ODE(s) from initial value (x0, t0) to a given t value using given method and maximum
     step size and returns array of solutions
-    :param eqs: ODE(s) to solve
+    :param ode: ODE(s) to solve
     :param x0: initial x value
     :param t0: initial t value
     :param t1: final t value
@@ -136,20 +99,21 @@ def solve_ode(x0, t0, t1, eqs, method, deltat_max, *args):
     else:
         raise TypeError('Initial time wrong type')
     # checks type of final time
-    if isinstance(t1, int) or isinstance(t1, float):
+    if isinstance(t1, int) or isinstance(t1, float) or np.issubdtype(t1, np.integer):
         pass
     else:
+        print(type(t1))
         raise TypeError('Final fime wrong type')
-    # checks given ode is a function
+    # checks given ode is a function, very tedious - improvement which I will look to make
     try:
-        is_fun = str(eqs)[1]
+        is_fun = str(ode)[1]
         if is_fun == 'f':
             pass
         else:
             raise TypeError('Given ode not a function')
     except IndexError:
         raise TypeError('Given ode not a function')
-    # checks method is suitable
+
     if method == 'runge' or method == 'euler':
         pass
     else:
@@ -174,16 +138,46 @@ def solve_ode(x0, t0, t1, eqs, method, deltat_max, *args):
 
     for no in range(1, len(t_array)):
         if isinstance(x[no-1], list):
-            xx = solve_to(eqs, x[no-1][:], t_array[no-1], t_array[no], deltat_max, method, *args)
+            xx = solve_to(ode, x[no-1][:], t_array[no-1], t_array[no], deltat_max, method, *args)
             x = x + [xx]
         else:
-            xx = solve_to(eqs, x[no-1], t_array[no-1], t_array[no], deltat_max, method, *args)
+            xx = solve_to(ode, x[no-1], t_array[no-1], t_array[no], deltat_max, method, *args)
             x = x + [xx]
-
     return np.array(x)
 
 
 if __name__ == '__main__':
+
+    def f(x, t):
+        """
+        A function that returns the value of dxdt = x at (x, t)
+        :param x: x value
+        :param t: t value
+        :return: value of ODE at (x, t)
+        """
+        return x
+
+    def f2(U0, t):
+        """
+        A function that returns the value of dxdt = y and dydt = -x at (U0, t)
+        :param U0: tuple containing x, y values
+        :param t: t value
+        :return: values of ODEs at (U0, t)
+        """
+        x, y = U0
+        dxdt = y
+        dydt = -x
+        return [dxdt, dydt]
+
+    def f_true(t):
+        """
+        A function that returns the true value of dxdt = x at (x, t)
+        :param x: x value
+        :param t: t value
+        :return: true value of ODE at (x, t)
+        """
+        x = np.exp(t)
+        return x
 
     # plotting runge, euler and exact solution to dxdt = x to measure method precision
 
@@ -239,7 +233,7 @@ if __name__ == '__main__':
     plt.show()
 
     # error plots for runge and euler methods for dxdt = x
-
+    # may need zooming out to see points
     def error_graph(x, time, time1, fun):
 
         h_value_list = np.logspace(-4, 0, 50)
@@ -278,17 +272,17 @@ if __name__ == '__main__':
     eul_err, run_err = error_graph(x0, t0, t1, f)
 
     # timing euler and runge for similar error
+    # shows that RK4 takes considerbly shorter time period
 
     x0 = 1, 1
     t0 = 0
     t1 = 1
 
-    start_t = time.time()
-    solve_ode(x0, t0, t1, f, 'runge', 0.000737)
-    final_t_r = time.time() - start_t
-
-    start_t = time.time()
-    solve_ode(x0, t0, t1, f, 'euler', 0.4714866)
-    final_t_e = time.time() - start_t
-    print('Time taken RK4: ',final_t_r)
+    start_t = time.process_time()
+    solve_ode(x0, t0, t1, f, 'runge', 0.4714866)
+    final_t_r = time.process_time() - start_t
+    start_t = time.process_time()
+    solve_ode(x0, t0, t1, f, 'euler', 0.000737)
+    final_t_e = time.process_time() - start_t
+    print('Time taken RK4: ', final_t_r)
     print('Time taken Euler: ', final_t_e)
