@@ -2,8 +2,9 @@ import numpy as np
 from solve_odes import solve_ode
 from num_shooting import shooting
 from num_shooting import orbit
-from num_continuation import nat_continuation
+from num_continuation import continuation
 import math
+from scipy.optimize import fsolve
 
 
 def test_shooting_solutions(U0, ode, f_true_sol, args):
@@ -206,14 +207,13 @@ if __name__ == '__main__':
     pmax = 0
     pstep = 20
 
-    par_list, solutions = nat_continuation(hopfn, U0, pmin, pmax, pstep, pc_stable_0, shooting)
-
+    solutions, parameters = continuation('natural', hopfn, U0, pmin, pmax, pstep, pc_stable_0, shooting, fsolve)
     t_list = []
     exact_sols = []
     j = 0
     for i in solutions:
         t = i[-1]
-        args = [par_list[j], 0]
+        args = [parameters[j], 0]
         exact_sol = true_sol(t, args)
         exact_sols = exact_sols + [exact_sol]
         j += 1
