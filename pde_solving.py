@@ -78,9 +78,6 @@ def forward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
             u_jp1 = np.dot(M, u_j)
             u_j = u_jp1
 
-            # u_j[-1] = q(t[j])
-            # u_j[0] = p(t[j])
-
     return u_j
 
 
@@ -218,11 +215,6 @@ def solve_pde(mx, mt, method, bc, p, q, plot, args):
     :return: state of pde at time = T
     """
 
-    def u_initial(x):
-        # initial temperature distribution
-        y = np.sin(pi * x / L)
-        return y
-
     if isinstance(mx, int):
         pass
     else:
@@ -280,6 +272,12 @@ def solve_pde(mx, mt, method, bc, p, q, plot, args):
     return u_j
 
 
+def u_initial(x):
+    # initial temperature distribution
+    y = np.sin(pi * x / L)
+    return y
+
+
 def results_plot(u_j, bc, mx, T=0.5):
 
     if bc == 'periodic':
@@ -295,30 +293,28 @@ def results_plot(u_j, bc, mx, T=0.5):
     pl.show()
 
 
-def p(t):
-    """
-    LHS boundary condition
-    :param t: time value
-    :return: boundary condition at t
-    """
-    return 0
-
-
-def q(t):
-    """
-    RHS boundary condition
-    :param t: time value
-    :return: boundary condition at t
-    """
-    return 0
-
-
 if __name__ == '__main__':
 
     def u_exact(x, t):
         # the exact solution
         y = np.exp(-kappa * (pi ** 2 / L ** 2) * t) * np.sin(pi * x / L)
         return y
+
+    def p(t):
+        """
+        LHS boundary condition
+        :param t: time value
+        :return: boundary condition at t
+        """
+        return 0
+
+    def q(t):
+        """
+        RHS boundary condition
+        :param t: time value
+        :return: boundary condition at t
+        """
+        return 0
 
     # Set problem parameters/functions
     kappa = 1.0  # diffusion constant
