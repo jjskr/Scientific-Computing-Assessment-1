@@ -172,7 +172,6 @@ if __name__ == '__main__':
     def f_true(t):
         """
         A function that returns the true value of dxdt = x at (x, t)
-        :param x: x value
         :param t: t value
         :return: true value of ODE at (x, t)
         """

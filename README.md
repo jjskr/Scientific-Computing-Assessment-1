@@ -3,6 +3,8 @@ This software is capable of tackling problems concerning both ordinary and parti
 
 Each file can be run separately to perform different sub-problems associated with numerical continuation. However, the primary use for this software is its ability to perform continuation by varying a chosen parameter value in a specified equation/system of equations to show the effect the chosen parameter has on the system.
 
+Pseudo-arclength is functional for cubic and ordinary Hopfield bifurcation normal form, however not for the modified version.
+
 PDE solving file works for Dirichlet boundary conditions, however the reliability of other boundary conditions varies.
 
 Examples of each file in use can be found at the bottom of each file.

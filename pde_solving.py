@@ -365,7 +365,7 @@ if __name__ == '__main__':
     mx = 10
 
     x1 = np.linspace(0, args[1], mx + 1)
-    t = np.linspace(0, args[2], mt)  # mesh points in time
+    # t = np.linspace(0, args[2], mt)  # mesh points in time
     xx = np.linspace(0, args[1], 250)
 
     g_FE = solve_pde(mx, mt, 'FE', 'dirichlet', p, q, False, args)

@@ -52,6 +52,7 @@ def psuedo_continuation(ode, U0, params_list, discretisation, pc):
     :param U0: Initial conditions
     :param params_list: List of parameters
     :param discretisation: Discretisation to use
+    :param pc: Phase condition
     :return: List of parameters and solutions at each parameter value
     """
     def new_predict_calc(solution_list, parameter_list, index):

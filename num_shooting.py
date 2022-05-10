@@ -114,7 +114,7 @@ if __name__ == '__main__':
         :param args: list of beta and sigma constants
         :return: solutions to hopf equations
         """
-        # print(U0, t)
+
         beta = args[0]
         sigma = args[1]
         u1, u2 = U0
