@@ -4,26 +4,9 @@ from math import pi
 import scipy.sparse as ssp
 from scipy.sparse.linalg import spsolve
 import warnings
-
+import time
+# bypass efficiency warnings, no real cause for concern
 warnings.filterwarnings('ignore', category=ssp.SparseEfficiencyWarning)
-
-
-def p(t):
-    """
-    LHS boundary condition
-    :param t: time value
-    :return: boundary condition at t
-    """
-    return 1
-
-
-def q(t):
-    """
-    RHS boundary condition
-    :param t: time value
-    :return: boundary condition at t
-    """
-    return 1
 
 
 def tri_mat(dias, m_len):
@@ -53,16 +36,19 @@ def forward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
     :param t: linspace for t
     :return: conditions at t=T
     """
+    # diagonals defined
     dias = [lmbda, 1-2*lmbda, lmbda]
 
     if bc == 'dirichlet':
-
+        # length of matrix required
         m_len = mx-1
+        # initiates tridiagonal matrix
         M = tri_mat(dias, m_len)
+        # initiates additive vector
         add_v = np.zeros(m_len)
 
         for j in range(0, mt):
-
+            # for each value in time range, calculation made for new state
             add_v[0], add_v[-1] = p(t[j]), q(t[j])
             add_v_l = add_v * lmbda
             u_jp1 = np.dot(M, u_j[1:-1]) + add_v_l
@@ -86,14 +72,14 @@ def forward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
 
         M = tri_mat(dias, mx)
         M[0, mx - 1], M[mx - 1, 0] = lmbda, lmbda
-
+        u_j = u_j[:-1]
         for j in range(0, mt):
 
             u_jp1 = np.dot(M, u_j)
             u_j = u_jp1
 
-            u_j[-1] = q(t[j])
-            u_j[0] = p(t[j])
+            # u_j[-1] = q(t[j])
+            # u_j[0] = p(t[j])
 
     return u_j
 
@@ -185,10 +171,8 @@ def crank_nicholson(u_j, lmbda, bc, p, q, deltax, mx, mt, t):
             add_v[0], add_v[-1] = p(t[j]), q(t[j])
             add_v_l = add_v * lmbda
             u_jp1 = spsolve(MA, MB*u_j[1:mx]) + add_v_l
-            u_j = np.zeros(mx + 1)
-            u_j[1:-1] = u_jp1[:]
-            u_j[0] = add_v[0]
-            u_j[-1] = add_v[-1]
+            u_j[1:mx] = u_jp1[:]
+            u_j[0], u_j[-1] = add_v[0], add_v[-1]
 
     if bc == 'neumann':
 
@@ -234,6 +218,11 @@ def solve_pde(mx, mt, method, bc, p, q, plot, args):
     :return: state of pde at time = T
     """
 
+    def u_initial(x):
+        # initial temperature distribution
+        y = np.sin(pi * x / L)
+        return y
+
     if isinstance(mx, int):
         pass
     else:
@@ -262,49 +251,8 @@ def solve_pde(mx, mt, method, bc, p, q, plot, args):
     L = args[1]
     T = args[2]
 
-    def u_initial(x):
-        # initial temperature distribution
-        y = np.sin(pi * x / L)
-        return y
-
-    def u_exact(x, t):
-        # the exact solution
-        y = np.exp(-kappa * (pi ** 2 / L ** 2) * t) * np.sin(pi * x / L)
-        return y
-
-    def non_homog_exact(x, t):
-        # the exact solution
-        y = np.exp(-1 * (pi ** 2 / 1 ** 2) * t) * np.sin(pi * x / 1) + 1 + (2 - 1) * x / 1
-        return y
-
-    def results_plot(u_j, bc, mx, T=0.5):
-
-        if bc == 'periodic':
-            # Plot the final result and exact solution
-            x = np.linspace(0, L, mx)  # mesh points in space
-            pl.plot(x, u_j, 'ro', label='num')
-            xx = np.linspace(0, L, 250)
-            pl.plot(xx, u_exact(xx, T), 'b-', label='exact')
-            pl.xlabel('x')
-            pl.ylabel('u(x,0.5)')
-            pl.legend(loc='upper right')
-            pl.show()
-        else:
-            # Plot the final result and exact solution
-            x = np.linspace(0, L, mx + 1)  # mesh points in space
-            pl.plot(x, u_j, 'ro', label='num')
-            xx = np.linspace(0, L, 250)
-            pl.plot(xx, non_homog_exact(xx, T), 'b-', label='exact')
-            pl.xlabel('x')
-            pl.ylabel('u(x,0.5)')
-            pl.legend(loc='upper right')
-            pl.show()
-
     # Set up the numerical environment variables
     x = np.linspace(0, L, mx + 1)  # mesh points in space
-
-    if bc == 'periodic':
-        x = np.linspace(0, L, mx)  # mesh points in space
 
     t = np.linspace(0, T, mt + 1)  # mesh points in time
     deltax = x[1] - x[0]  # gridspacing in x
@@ -313,13 +261,9 @@ def solve_pde(mx, mt, method, bc, p, q, plot, args):
 
     # Set up the solution variables
     u_j = np.zeros(x.size)  # u at current time step
-    # Set initial condition
-    if bc == 'periodic':
-        for i in range(0, mx):
-            u_j[i] = u_initial(x[i])
-    else:
-        for i in range(0, mx + 1):
-            u_j[i] = u_initial(x[i])
+
+    for i in range(0, mx + 1):
+        u_j[i] = u_initial(x[i])
 
     if method == 'FE':
         u_j = forward_euler(u_j, lmbda, bc, p, q, deltax, mx, mt, t)
@@ -336,6 +280,39 @@ def solve_pde(mx, mt, method, bc, p, q, plot, args):
     return u_j
 
 
+def results_plot(u_j, bc, mx, T=0.5):
+
+    if bc == 'periodic':
+        x = np.linspace(0, L, mx)
+    else:
+        x = np.linspace(0, L, mx + 1)
+    pl.plot(x, u_j, 'ro', label='num')
+    xx = np.linspace(0, L, 250)
+    pl.plot(xx, u_exact(xx, T), 'b-', label='exact')
+    pl.xlabel('x')
+    pl.ylabel('u(x,0.5)')
+    pl.legend(loc='upper right')
+    pl.show()
+
+
+def p(t):
+    """
+    LHS boundary condition
+    :param t: time value
+    :return: boundary condition at t
+    """
+    return 0
+
+
+def q(t):
+    """
+    RHS boundary condition
+    :param t: time value
+    :return: boundary condition at t
+    """
+    return 0
+
+
 if __name__ == '__main__':
 
     def u_exact(x, t):
@@ -343,59 +320,67 @@ if __name__ == '__main__':
         y = np.exp(-kappa * (pi ** 2 / L ** 2) * t) * np.sin(pi * x / L)
         return y
 
-    # uf = solve_pde(mx, mt, 'CN', 'neumann', p, q, True, args)
-    # x = np.linspace(0, L, mx + 1)
-    # pl.plot(x, uf, 'ro')
-    # pl.show()
+    # Set problem parameters/functions
+    kappa = 1.0  # diffusion constant
+    L = 1.0  # length of spatial domain
+    T = 0.5  # total time to solve for
 
-    # fe = solve_pde(mx, mt, 'BE', 'periodic', p, q, True, args)
-    # x = np.linspace(0, args[1], mx + 1)
-    # pl.plot(x, fe, 'ro')
-    # pl.show()
-
-    # solve_pde(mx, mt, 'FE', 'dirichlet', p, q, True, args)
-    # solve_pde(mx, mt, 'BE', 'dirichlet', p, q, True, args)
-    # solve_pde(mx, mt, 'CN', 'dirichlet', p, q, True, args)
+    mx = 30  # number of gridpoints in space
+    mt = 1000  # number of gridpoints in time
+    args = [kappa, L, T]
+    u_FE = solve_pde(mx, mt, 'FE', 'dirichlet', p, q, True, args)
 
     # plot comparing accuracy of each method
 
     # Set numerical parameters
 
     # Set problem parameters/functions
-    kappa = 0.5  # diffusion constant
-    L = 2.0  # length of spatial domain
+    kappa = 1.0  # diffusion constant
+    L = 1.0  # length of spatial domain
     T = 0.5  # total time to solve for
 
     mx = 30  # number of gridpoints in space
     mt = 1000  # number of gridpoints in time
     args = [kappa, L, T]
+    for_euler_start = time.time()
+    u_FE = solve_pde(mx, mt, 'FE', 'dirichlet', p, q, False, args)
+    for_euler_finish = time.time()
+    u_BE = solve_pde(mx, mt, 'BE', 'dirichlet', p, q, False, args)
+    back_euler_finish = time.time()
+    u_CN = solve_pde(mx, mt, 'CN', 'dirichlet', p, q, False, args)
+    crank_finish = time.time()
+    print('-------------------')
+    print('Time Simulations:')
+    print('Forward Euler: ', for_euler_finish - for_euler_start)
+    print('Backward Euler: ', back_euler_finish - for_euler_finish)
+    print('Crank Nicolson: ', crank_finish - back_euler_finish)
+    print('-------------------')
 
-    u_FE = solve_pde(mx, mt, 'FE', 'periodic', p, q, False, args)
-    u_BE = solve_pde(mx, mt, 'BE', 'periodic', p, q, False, args)
-    u_CN = solve_pde(mx, mt, 'CN', 'periodic', p, q, False, args)
-
-    x = np.linspace(0, args[1], mx)
+    x = np.linspace(0, args[1], mx + 1)
     t = np.linspace(0, args[2], mt + 1)  # mesh points in time
     xx = np.linspace(0, args[1], 250)
 
     pl.plot(x, u_FE, 'ro', label='FE')
-    # pl.plot(x, u_BE, 'bo', label='BE')
-    # pl.plot(x, u_CN, 'ko', label='CN')
-    # pl.plot(xx, u_exact(xx, args[2]), label='Exact')
+    pl.plot(x, u_BE, 'bo', label='BE')
+    pl.plot(x, u_CN, 'ko', label='CN')
+    pl.plot(xx, u_exact(xx, args[2]), label='Exact')
+    pl.title('Comparing methods with homogenous boundary conditions')
     pl.legend()
+    pl.ylabel('u(x,0.5)')
+    pl.xlabel('x')
     pl.show()
 
     # plot showing how lambda changes the accuracy of each method
 
     mx = 10
 
-    x1 = np.linspace(0, L, mx + 1)
-    t = np.linspace(0, T, mt)  # mesh points in time
-    xx = np.linspace(0, L, 250)
+    x1 = np.linspace(0, args[1], mx + 1)
+    t = np.linspace(0, args[2], mt)  # mesh points in time
+    xx = np.linspace(0, args[1], 250)
 
-    g_FE = solve_pde(mx, mt, 'FE', 'periodic', p, q, False, args)
-    g_BE = solve_pde(mx, mt, 'BE', 'periodic', p, q, False, args)
-    g_CN = solve_pde(mx, mt, 'CN', 'periodic', p, q, False, args)
+    g_FE = solve_pde(mx, mt, 'FE', 'dirichlet', p, q, False, args)
+    g_BE = solve_pde(mx, mt, 'BE', 'dirichlet', p, q, False, args)
+    g_CN = solve_pde(mx, mt, 'CN', 'dirichlet', p, q, False, args)
 
     fig, (ax1, ax2) = pl.subplots(1, 2, sharey=True)
     ax1.plot(x, u_FE, 'ro', label='FE')
@@ -404,28 +389,35 @@ if __name__ == '__main__':
     ax1.plot(xx, u_exact(xx, T), label='Exact')
     ax1.set_title('lambda = 0.45')
     ax1.legend()
+    pl.ylabel('u(x,0.5)')
+    pl.xlabel('x')
     ax2.plot(x1, g_FE, 'ro', label='FE')
     ax2.plot(x1, g_BE, 'bo', label='BE')
     ax2.plot(x1, g_CN, 'ko', label='CN')
     ax2.plot(xx, u_exact(xx, T), label='Exact')
     ax2.set_title('lambda = 0.05')
     ax2.legend()
+    pl.ylabel('u(x,0.5)')
+    pl.xlabel('x')
     pl.show()
 
     # plotting periodic boundary conditions
-    mx = 30
-    p_FE = solve_pde(mx, mt, 'FE', 'periodic', p, q, False, args)
-    x = np.linspace(0, L, mx)
-    xx = np.linspace(0, L, 250)
-    pl.plot(x, p_FE, 'ro', label='FE')
-    pl.plot(xx, u_exact(xx, T))
-    pl.legend()
-    pl.title('Graph showing periodic solution using Forward Euler')
-    pl.show()
+    # change boundary conditions need changing accordingly
+    # mx = 30
+    # p_FE = solve_pde(mx, mt, 'FE', 'periodic', p, q, True, args)
+    # x = np.linspace(0, L, mx)
+    # xx = np.linspace(0, L, 250)
+    # pl.plot(x, p_FE, 'ro', label='FE')
+    # pl.plot(xx, u_exact(xx, T))
+    # pl.legend()
+    # pl.ylabel('u(x,0.5)')
+    # pl.xlabel('x')
+    # pl.title('Graph showing periodic solution using Forward Euler')
+    # pl.show()
 
     # plot showing how distribution changes with p
 
-    def u_exact(x, t, p):
+    def u_exact_p(x, t, p):
         # the exact solution
         y = np.exp(-kappa * (pi ** 2 / L ** 2) * t) * np.sin(pi * x / L) ** p
         return y
@@ -435,7 +427,7 @@ if __name__ == '__main__':
 
     x = np.linspace(0, L, 100)  # mesh points in space
     for i in range(1, 10):
-        y_list = y_list + [u_exact(x, 0.1, i)]
+        y_list = y_list + [u_exact_p(x, 0.1, i)]
         labels = labels + ['p = ' + str(i)]
     for i in range(len(y_list)):
         pl.plot(x, y_list[i], label=labels[i])
