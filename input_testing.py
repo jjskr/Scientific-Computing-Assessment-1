@@ -1,13 +1,5 @@
-import numpy as np
-from solve_odes import f2
-from solve_odes import f
 from solve_odes import solve_ode
-from solve_odes import solve_to
-from solve_odes import euler_step
-from solve_odes import runge_kutta
 from num_shooting import orbit
-from num_shooting import shooting
-from scipy.optimize import fsolve
 
 
 def code_testing_solve_ode():
@@ -21,7 +13,7 @@ def code_testing_solve_ode():
     suitable_method = 'runge'
 
     unsuitable_x0 = 'str'
-    long_x0_f = [1, 1]
+    long_x0_f = (1, 1)
     unsuitable_t0 = 'str'
     unsuitable_t1 = 'str'
     unsuitable_dt = 'str'
@@ -66,7 +58,6 @@ def code_testing_solve_ode():
         tests_failed = tests_failed + ['unsuitable function type test']
     except TypeError:
         tests_passed = tests_passed + ['unsuitable function type test']
-
 
     # test method type
     try:
@@ -133,6 +124,15 @@ def code_testing_orbit_function():
 
 if __name__ == '__main__':
 
+    def f(x, t):
+        """
+        A function that returns the value of dxdt = x at (x, t)
+        :param x: x value
+        :param t: t value
+        :return: value of ODE at (x, t)
+        """
+        return x
+
     def hopf(U0, t, args):
         """
         A function that returns solutions to the hopf equations at (U0, t)
@@ -166,3 +166,5 @@ if __name__ == '__main__':
     print('TESTS FAILED: ', tests_failed_o)
     print('TESTS PASSED: ', tests_passed_o)
     print('--------------------------')
+
+    # dimension test fails for solve ode :(

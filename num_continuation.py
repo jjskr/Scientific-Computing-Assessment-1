@@ -71,13 +71,14 @@ def psuedo_continuation(ode, U0, params_list, discretisation, pc):
 
         return x_change, p_change, pred_arr
 
-    def update_parameter_val(new_parameter):
+    def pseudo_eq(x, prediction_array):
         """
-        Function to update parameter in pseudo arclength equation
-        :param new_parameter: prediction for next parameter value
-        :return: updated parameter value
+        Function returning pseudo-arclength equation at each iteration
+        :param x: state vector to solve for
+        :param prediction_array: array containing prediction information
+        :return: pseudo-arclength equation
         """
-        return new_parameter
+        return np.dot(x[:-1] - prediction_array[:-1], delta_x) + np.dot(x[-1] - prediction_array[-1], delta_p)
 
     if discretisation == shooting:
         args = (pc, params_list[0])
@@ -103,16 +104,12 @@ def psuedo_continuation(ode, U0, params_list, discretisation, pc):
         # equation updated until root is found,
         if discretisation == shooting:
             # root found for solving discretisation problem with updated parameter and pseudo arclength equation
-            sol = fsolve(lambda x: np.append(discretisation(ode)(x[:-1], pc, update_parameter_val(x[-1])),
-                                                 np.dot(x[:-1] - prediction_array[:-1], delta_x) + np.dot(
-                                                     x[-1] - prediction_array[-1],
-                                                     delta_p)), prediction_array)
+            sol = fsolve(lambda x: np.append(discretisation(ode)(x[:-1], pc, x[-1]), pseudo_eq(x, prediction_array)),
+                         prediction_array)
         # pc not needed for cubic equation
         else:
-            sol = fsolve(lambda x: np.append(discretisation(ode)(x[:-1], update_parameter_val(x[-1])),
-                                                 np.dot(x[:-1] - prediction_array[:-1], delta_x) + np.dot(
-                                                     x[-1] - prediction_array[-1],
-                                                     delta_p)), prediction_array)
+            sol = fsolve(lambda x: np.append(discretisation(ode)(x[:-1], x[-1]), pseudo_eq(x, prediction_array)),
+                         prediction_array)
         # giving updates in terminal
         if discretisation == shooting:
             if i == 40:
