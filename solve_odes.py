@@ -102,7 +102,6 @@ def solve_ode(x0, t0, t1, ode, method, deltat_max, *args):
     if isinstance(t1, int) or isinstance(t1, float) or np.issubdtype(t1, np.integer):
         pass
     else:
-        print(type(t1))
         raise TypeError('Final fime wrong type')
     # checks given ode is a function, very tedious - improvement which I will look to make
     try:
@@ -197,6 +196,7 @@ if __name__ == '__main__':
     plt.xlabel('t')
     plt.ylabel('x')
     plt.legend()
+    plt.title('Graph showing how Euler and RK4 methods compare with the true solution')
     plt.show()
 
     # solving 2 dimensional odes over a long time span to show long term behaviours of respective methods
@@ -228,6 +228,7 @@ if __name__ == '__main__':
     plt.plot(xe, xdote, label='Euler')
     plt.xlabel('x')
     plt.ylabel('dxdt')
+    plt.title('Graph showing how time span and timestep effect performance')
     plt.legend()
     plt.show()
 
@@ -260,6 +261,7 @@ if __name__ == '__main__':
         ax.set_xscale('log')
         plt.xlabel('delta t')
         plt.ylabel('Error')
+        plt.title('Graph showing how errors compare at different timesteps')
         plt.legend()
         plt.show()
 
